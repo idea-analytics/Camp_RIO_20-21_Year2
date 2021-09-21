@@ -1,0 +1,292 @@
+---
+title: "AP Analysis, 2020-2021"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+
+ap
+
+survey_20_21_CP_clean <- survey_20_21_CP%>%
+  clean_names()
+survey_20_21_CP_clean
+
+survey_20_21_CP_clean$which_grade_are_you_currently_in <- as.numeric(survey_20_21_CP_clean$which_grade_are_you_currently_in)
+survey_20_21_CP_clean
+
+survey_select <- survey_20_21_CP_clean %>%
+  select(student_id, which_grade_are_you_currently_in, before_today_how_many_times_have_you_visited_camp_rio)
+survey_select
+
+survey_select1 <- survey_select %>%
+  mutate(attended_camp_rio_bin = before_today_how_many_times_have_you_visited_camp_rio)
+survey_select1
+
+survey_select1$attended_camp_rio_bin[survey_select1$attended_camp_rio_bin <2] <- 0 
+survey_select1
+
+
+survey_select1$attended_camp_rio_bin[survey_select1$attended_camp_rio_bin >0] <- 1 
+survey_select1
+survey_select1$attended_camp_rio_bin <- as.numeric(survey_select1$attended_camp_rio_bin)
+survey_select1
+
+survey_select2 <- survey_select1 %>%
+  select(student_id, which_grade_are_you_currently_in, attended_camp_rio_bin)
+survey_select2
+
+```
+Join Camp Rio Student Survey (20-21 CP) to AP table. by student_id
+
+```{r}
+
+ap_survey <- left_join(survey_select2, ap, by= NULL)
+ap_survey <- ap_survey %>%
+  clean_names()
+ap_survey
+
+ap_result
+```
+
+bin0
+```{r}
+ap_survey_bin0 <- ap_survey %>%
+  filter(attended_camp_rio_bin == 0)
+ap_survey_bin0 #505 rows attended camp rio bin0 (0-2 times)
+
+
+
+#-------------------
+
+#bin0
+
+#  28 exams were taken
+# 23 exams failed
+# 5 exams passed
+
+5/28  # 0.1786 passed = 17.86%
+
+
+#Average Score Bin0
+N_bin0 <- 28
+N_bin0
+sum_bin0 <- (4 + 1 + 1 + 2 + 1 + 1 + 2 + 2 + 1 + 1)  + (1 + 1 + 1 + 1 + 1 + 3 + 2 + 2 + 2 + 2) + (2 + 2 + 3 + 4 + 4 + 1 + 1 + 1)
+sum_bin0
+
+ave_bin0 <- sum_bin0 / N_bin0
+ave_bin0  #1.79 is average AP science score for those who attended (0-2) times to Camp Rio
+
+
+
+#excluding physics
+
+#26 exams taken (we subtracted out the 2 physics exams from 28)
+#5 exams passed
+#21 exams failed
+
+5/26  #0.1923 = 19.23% passed, exluding physics, bino (0-2) times to Camp Rio
+
+#Average Score Bin0, exluding physics
+N_bin0_no_phys <- 28
+N_bin0_no_phys
+sum_bin0_no_phys <- (4 + 1 + 1 + 2 + 1 + 1 + 2 + 2 + 1 + 1)  + (1 + 1 + 1 + 1 + 1 + 3 + 2 + 2 + 2 + 2) + (2 + 2 + 3 + 4 + 4 + 1)
+sum_bin0_no_phys #48
+
+ave_bin0_no_phys <- sum_bin0_no_phys / N_bin0_no_phys
+ave_bin0_no_phys  #1.79 is average AP science score for those who attended (0-2) times to Camp Rio
+
+
+
+
+```
+
+bin1
+```{r}
+ap_survey_bin1 <- ap_survey %>%
+  filter(attended_camp_rio_bin == 1)
+ap_survey_bin1 #794 rows attended camp rio bin0 (0-2 times)
+
+
+
+#-------------------
+
+#bin1
+
+#  118 exams were taken
+# 14 exams passed
+# 104 exams failed
+
+14/118  # 0.1186 passed = 11.86%   *many more physics exams were attempted in bin1, all failed, but phys. is likely harder, so if we removed physics from the analysis, may have an increased passing rate for bin1
+
+
+#Average Score Bin0
+N_bin1 <- 118
+N_bin1
+sum_bin1 <- (2 + 2 + 3 + 3 + 1 + 2 + 1 + 1 + 1 + 1 + 1 + 1 + 2 + 2 + 1 + 2 + 2 + 3)  + (1 + 1 + 4 + 1 + 2 + 1 + 4 + 1 + 1 + 1 + 1 + 1 + 5 + 1 + 2 + 2 + 1) + (1 + 2 + 1 + 1 + 1 + 1 + 1 + 2 + 1 + 1 + 2 + 1 + 1 + 1 + 1 + 2 + 1 + 2) + (2 + 1 + 1 + 1 + 3 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1) +
+  (1 + 1 + 1 + 1 + 1 + 1 + 2 + 1 + 1 + 3 + 1 + 1 + 2 + 2 + 1 + 1 + 1 + 1) + (3 + 2 + 4 + 4 + 3 + 3 + 3 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1) + (1 + 1 + 1 + 2 + 1 + 1 + 1 + 1 + 1)  #167
+sum_bin1
+
+ave_bin1 <- sum_bin1 / N_bin1
+ave_bin1  #1.42 is average AP science score for those who attended (0-2) times to Camp Rio
+
+
+#bin1, excluding physics: 32 exams
+
+# 86 exams were taken
+# 14 exams passed
+# 72 exams failed
+
+14/86  # 0.1628 passed = 16.28%   %passed excluding physics, bin1
+
+
+N_bin1_no_phys <- 118 - 32   #86 total exams (excluding physics)
+N_bin1_no_phys
+
+sum_bin1_no_phys <- (2 + 2 + 3 + 3 + 1 + 2 + 1 + 1 + 1 + 1 + 1 + 1 + 2 + 2 + 1 + 2 + 2 + 3)  + 
+  (1 + 1 + 4 + 1 + 2 + 1 + 4 + 1 + 1 + 1 + 1 + 1 + 5 + 1 + 2 + 2 + 1) + 
+  (1 + 2 + 1 + 1 + 1 + 1 + 1 + 2 + 1 + 1 + 2 + 1 + 1 + 1 + 2 + 1 + 2) +
+  (2 + 1 + 1 + 1 + 3 + 1 + 1 + 1 + 1) +  (1 + 2 + 1 + 1 + 3 + 1 + 1 + 2 + 2 + 1 + 1 + 1 + 1) + (3 + 4 + 4 + 3 + 3 + 3) #133
+sum_bin1_no_phys
+ave_bin1_no_phys <- sum_bin1_no_phys / N_bin1_no_phys
+ave_bin1_no_phys  #1.55 average AP science score for those who attended (>2 times) to Camp Rio, Excluding Physics 
+
+```
+Whitney Mann U for Average AP Score 
+```{r}
+#including all science AP exams
+
+bin0_score <- c(4,1,1,2,1,1,2,2,1,1,1,1,1,1,1,3,2,2,2,2,2,2,3,4,4,1, 1, 1)
+bin0_score
+  
+bin1_score <-c(2,2,3,3,1,2,1,1,1,1,1,1,2,2,1,2,2,3,1,1,4,1,2,1,4,1,1,1,1,1,5,1,2,2,1,1,2,1,1,1,1,1,2,1,1,2,1,1,1,1,2,1,2,2,1,1,1,3,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,2,1,1,3,1,1,2,2,1,1,1,1,3,2,4,4,3,3,3,1,1,1,1,1,1,1,1,1,1, 1,1,1,1,2,1,1,1,1,1)
+bin1_score
+
+#----------------------------
+
+#excluding physics
+
+bin0_score_no_phys <-  c(4,1,1,2,1,1,2,2,1,1,1,1,1,1,1,3,2,2,2,2,2,2,3,4,4,1)
+bin0_score_no_phys
+
+bin1_score_no_phys <- c(2,2,3,3,1,2,1,1,1,1,1,1,2,2,1,2,2,3,1,1,4,1,2,1,4,1,1,1,1,1,5,1,2,2,1,1,2,1,1,1,1,1,2,1,1,2,1,1,1,2,1,2,2,1,1,1,3,1,1,1,1,1,2,1,1,3,1,1,2,2,1,1,1,1,3,4,4,3,3,3)
+bin1_score_no_phys
+
+```
+
+Whitney Mann U CONT.
+```{r}
+#test first for normality:   #none of them are normal, all had p-values <0.05, rejecting the null of normality.
+
+shapiro.test(bin0_score)
+shapiro.test(bin1_score)
+shapiro.test(bin0_score_no_phys)
+shapiro.test(bin1_score_no_phys)
+
+#-------------------------
+#whiney Mann U - parametric test for non-normal data
+
+#YES Physics
+
+#all science AP exams (including Physics)
+wilcox.test(bin0_score, bin1_score)  #conclusion: Medians do NOT differ (they are not sig. different median scores, dist. not different)
+
+wilcox.test(bin0_score, bin1_score, alternative = "greater") #YES sig. different (p<0.05) for highest scores medians
+wilcox.test(bin0_score, bin1_score, alternative = "less") #not sig. differet (p>0.05) for lowest scores
+
+#--------------------------------------------
+#NO Physics
+
+#science AP exams (excluding Physics)
+wilcox.test(bin0_score_no_phys, bin1_score_no_phys)  #conclusion: Medians do NOT differ (they are not sig. different median scores
+
+wilcox.test(bin0_score_no_phys, bin1_score_no_phys, alternative = "greater") #YES sig. different (p<0.05) for highest scores medians
+wilcox.test(bin0_score_no_phys, bin1_score_no_phys, alternative = "less") #not sig. differet (p>0.05) for lowest scores
+
+
+
+
+
+```
+
+
+
+
+
+Table for the chi-Sq test                                *recall, bin1 is >2 visits to camp rio, bin0 is 0-2 visits to camp rio
+
+                   passed          Total 
+              yes         no
+
+Rio bin1     14          104       118
+
+Rio bin0     5           23         28
+
+
+Grand Total  19          127        146  AP Exams, 20-21
+
+
+Reference: https://data-flair.training/blogs/chi-square-test-in-r/
+```{r}
+ap_chisq <- contingency_table_AP_chisq_20_21 #imported from Excel (I created it in excel)
+ap_chisq
+
+
+#Make a Table, using "table()" function in r
+
+table_ap_chisq <-table(ap_chisq$camp_rio, ap_chisq$passed_ap_exam)
+table_ap_chisq
+
+```
+
+
+
+chi-sq test to compare catagorical variables (passed y/n, camp rio y/n)
+
+
+CONCLUSION: we get a chi-sq value of 0.71794, and a p-value of 0.40 > 0.05, so we conclude that we do not reject the null (that there is no difference between the 2 categorical variables).
+
+A small chi-sq value indicates a high correlation between the variables (not independent), and if the values were exactly equal the chi-sq value would be zero. Our value here is less than 1, which is very low, and the p-value was not < 0.05 therefore not statistically significant. Therefore, there is no statistically significant difference between camp rio attendence and college matriculation. https://www.investopedia.com/terms/c/chi-square-statistic.asp
+```{r}
+
+chisq.test(ap_chisq$camp_rio, ap_chisq$passed_ap_exam, correct=FALSE)
+
+
+#----------------------------------------------------
+
+
+#degrees of freedom
+#reference: https://www.statisticshowto.com/probability-and-statistics/hypothesis-testing/degrees-of-freedom/#twoSDF
+
+
+#(N1 + N2) - 2
+#df_2_samples <- (1277 + 1277) - 2
+#df_2_samples   #df = 2552
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

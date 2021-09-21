@@ -1,0 +1,1896 @@
+---
+title: "Analyze Science Grades 20-21"
+author: Maura Carter
+date: 07_20_21
+output: html_notebook
+---
+
+
+Analysis for GPA, GRADES, ACT (Camp RIO, Year2)
+
+----------------------------------------------------
+
+Get the Data.
+
+Student Survey CP (20-21)
+```{r}
+survey_20_21_CP <- read_excel("C:/Users/maura.carter/ideapublicschools.org/Evaluation of Camp Rio - Documents/Camp RIO Survey - Video - College Prep.xlsx") %>%
+  mutate(StudentID = as.numeric(`Please enter your student number.`))
+
+survey_20_21_CP
+
+#Clean the variable names (too many spaces/long!)
+library(janitor)
+survey2_20_21_CP <- survey_20_21_CP %>%
+  clean_names()
+head(survey2_20_21_CP)
+
+survey3_20_21_CP <- survey2_20_21_CP%>%
+  mutate(num_visits = before_today_how_many_times_have_you_visited_camp_rio, na.rm = TRUE)
+survey3_20_21_CP
+
+survey3_20_21_CP$num_visits <-as.numeric(survey3_20_21_CP$num_visits)
+survey3_20_21_CP
+
+#All a col called "num_visits_bin" to change number of visits to Binary (3+ = 1, 1 or 2 = 0;  OR:  >2 = 1, <3 = 0)
+survey4_20_21_CP <- survey3_20_21_CP %>%
+  mutate(num_visits_bin = num_visits, na.rm = TRUE)
+survey4_20_21_CP
+
+# "num_visits_bin" col: Make everything less than 2 (0, 1 prior visits) a "0". It really means that if they had 0 visits, it's 1 visit when you include today. If they had 1 prior visit, it's 2 including today, etc.
+survey4_20_21_CP$num_visits_bin[survey4_20_21_CP$num_visits_bin < 2] <- 0
+survey4_20_21_CP
+
+# "num_visits_bin" col: Make everything larger than 0 (all visits that are 2, 3, 4+ for prior visits) to a "1". It will actually start at "3" because if you include today's visit, you do 2 + 1 = 3.
+survey4_20_21_CP$num_visits_bin[survey4_20_21_CP$num_visits_bin > 0] <- 1
+survey4_20_21_CP
+
+survey5_20_21_CP <- survey4_20_21_CP %>%
+  select(student_id, num_visits_bin, which_grade_are_you_currently_in)
+survey5_20_21_CP
+
+```
+
+Student Survey Academy (20-21)
+```{r}
+
+survey_20_21_AC <- read_excel("C:/Users/maura.carter/ideapublicschools.org/Evaluation of Camp Rio - Documents/Camp RIO Survey - Video - Academy.xlsx")  %>% 
+  mutate(StudentID = as.numeric(`Please enter your student number.`))
+
+survey_20_21_AC
+
+#Clean the variable names (too many spaces/long!)
+library(janitor)
+survey2_20_21_AC <- survey_20_21_AC %>%
+  clean_names()
+head(survey2_20_21_AC)
+
+survey3_20_21_AC <- survey2_20_21_AC %>%
+  mutate(num_visits = before_today_how_many_times_have_you_visited_camp_rio, na.rm = TRUE)
+survey3_20_21_AC
+
+survey3_20_21_AC$num_visits <-as.numeric(survey3_20_21_AC$num_visits)
+survey3_20_21_AC
+
+#All a col called "num_visits_bin" to change number of visits to Binary (3+ = 1, 1 or 2 = 0;  OR:  >2 = 1, <3 = 0)
+survey4_20_21_AC <- survey3_20_21_AC %>%
+  mutate(num_visits_bin = num_visits, na.rm = TRUE)
+survey4_20_21_AC
+
+# "num_visits_bin" col: Make everything less than 2 (0, 1 prior visits) a "0". It really means that if they had 0 visits, it's 1 visit when you include today. If they had 1 prior visit, it's 2 including today, etc.
+survey4_20_21_AC$num_visits_bin[survey4_20_21_AC$num_visits_bin < 2] <- 0
+survey4_20_21_AC
+
+# "num_visits_bin" col: Make everything larger than 0 (all visits that are 2, 3, 4+ for prior visits) to a "1". It will actually start at "3" because if you include today's visit, you do 2 + 1 = 3.
+survey4_20_21_AC$num_visits_bin[survey4_20_21_AC$num_visits_bin > 0] <- 1
+survey4_20_21_AC
+
+survey5_20_21_AC <- survey4_20_21_AC %>%
+  select(student_id, num_visits_bin, which_grade_are_you_currently_in)
+survey5_20_21_AC
+
+
+```
+
+Student Survey: College Prep 19-20
+```{r}
+survey_19_20_CP <- read_excel("C:/Users/maura.carter/ideapublicschools.org/Evaluation of Camp Rio - Documents/Camp RIO Survey - College Prep.xlsx")%>%
+  mutate(StudentID = as.numeric(`Please enter your student number.`))
+
+survey_19_20_CP
+
+#Clean the variable names (too many spaces/long!)
+library(janitor)
+survey2_19_20_CP <- survey_19_20_CP %>%
+  clean_names()
+head(survey2_19_20_CP)
+
+survey3_19_20_CP <- survey2_19_20_CP%>%
+  mutate(num_visits = before_today_how_many_times_have_you_visited_camp_rio, na.rm = TRUE)
+survey3_19_20_CP
+
+survey3_19_20_CP$num_visits <-as.numeric(survey3_19_20_CP$num_visits)
+survey3_19_20_CP
+
+#All a col called "num_visits_bin" to change number of visits to Binary (3+ = 1, 1 or 2 = 0;  OR:  >2 = 1, <3 = 0)
+survey4_19_20_CP <- survey3_19_20_CP %>%
+  mutate(num_visits_bin = num_visits, na.rm = TRUE)
+survey4_19_20_CP
+
+# "num_visits_bin" col: Make everything less than 2 (0, 1 prior visits) a "0". It really means that if they had 0 visits, it's 1 visit when you include today. If they had 1 prior visit, it's 2 including today, etc.
+survey4_19_20_CP$num_visits_bin[survey4_19_20_CP$num_visits_bin < 2] <- 0
+survey4_19_20_CP
+
+# "num_visits_bin" col: Make everything larger than 0 (all visits that are 2, 3, 4+ for prior visits) to a "1". It will actually start at "3" because if you include today's visit, you do 2 + 1 = 3.
+survey4_19_20_CP$num_visits_bin[survey4_19_20_CP$num_visits_bin > 0] <- 1
+survey4_19_20_CP
+
+survey5_19_20_CP <- survey4_19_20_CP %>%
+  select(student_id, num_visits_bin)
+survey5_19_20_CP
+
+
+
+```
+
+Student Survey: Academy 19-20
+```{r}
+survey_19_20_AC <- read_excel("C:/Users/maura.carter/ideapublicschools.org/Evaluation of Camp Rio - Documents/Camp RIO Survey - Academy.xlsx")%>%
+  mutate(StudentID = as.numeric(`Please enter your student number.`))
+
+survey_19_20_AC
+
+#Clean the variable names (too many spaces/long!)
+library(janitor)
+survey2_19_20_AC <- survey_19_20_AC %>%
+  clean_names()
+head(survey2_19_20_AC)
+
+survey3_19_20_AC <- survey2_19_20_AC%>%
+  mutate(num_visits = before_today_how_many_times_have_you_visited_camp_rio, na.rm = TRUE)
+survey3_19_20_AC
+
+survey3_19_20_AC$num_visits <-as.numeric(survey3_19_20_AC$num_visits)
+survey3_19_20_AC
+
+#All a col called "num_visits_bin" to change number of visits to Binary (3+ = 1, 1 or 2 = 0;  OR:  >2 = 1, <3 = 0)
+survey4_19_20_AC <- survey3_19_20_AC %>%
+  mutate(num_visits_bin = num_visits, na.rm = TRUE)
+survey4_19_20_AC
+
+# "num_visits_bin" col: Make everything less than 2 (0, 1 prior visits) a "0". It really means that if they had 0 visits, it's 1 visit when you include today. If they had 1 prior visit, it's 2 including today, etc.
+survey4_19_20_AC$num_visits_bin[survey4_19_20_AC$num_visits_bin < 2] <- 0
+survey4_19_20_AC
+
+# "num_visits_bin" col: Make everything larger than 0 (all visits that are 2, 3, 4+ for prior visits) to a "1". It will actually start at "3" because if you include today's visit, you do 2 + 1 = 3.
+survey4_19_20_AC$num_visits_bin[survey4_19_20_AC$num_visits_bin > 0] <- 1
+survey4_19_20_AC
+
+survey5_19_20_AC <- survey4_19_20_AC %>%
+  select(student_id, num_visits_bin)
+survey5_19_20_AC
+
+```
+
+
+
+Join survey5_20_21_CP (college prep) to survey5_20_21_AC (academy)
+```{r}
+#join College Prep and Academy 20-21 surveys
+survey_20_21 <- bind_rows(survey5_20_21_AC, survey5_20_21_CP, .id=NULL)
+survey_20_21
+
+#AC and CP, ONLY 20-21
+survey_20_21
+
+#join College Prep and Academy 19-20 surveys
+survey2_20_21 <- bind_rows(survey5_19_20_AC, survey5_19_20_CP, .id=NULL)
+survey2_20_21
+
+#Bind 19-20 to 20-21 (student surveys)
+survey3_19_20_21 <- bind_rows(survey_20_21, survey2_20_21, .id=NULL)
+survey3_19_20_21
+
+#Master Student Survey (AC, CP, both years)
+survey3_19_20_21
+
+```
+
+
+GPA data
+```{r}
+gpa <- get_table(.table_name = "StudentAcademicSummary", .database_name = "PROD1", .schema = "Schools") %>%
+  filter(AcademicYear == '2020-2021' | AcademicYear == '2019-2020' ) %>%
+  collect()
+head(gpa)
+
+
+
+gpa_20_21 <- gpa %>%
+  select(PowerSchoolStudentID, AcademicYear, StudentNumber, GradeLevelID,CumulativeWeightedGPA, State)%>%
+  filter(AcademicYear == "2020-2021")
+gpa_20_21
+
+gpa2_20_21 <- gpa_20_21 %>%
+  mutate(student_id = StudentNumber)
+gpa2_20_21
+
+#gpa_20_21_search <- gpa_20_21%>%
+#  filter(StudentNumber== "108028113")
+#gpa_20_21_search
+
+gpa_0 <- gpa %>%
+  mutate(student_id = StudentNumber)%>%
+  select(PowerSchoolStudentID, AcademicYear, student_id, GradeLevelID,CumulativeWeightedGPA, State)
+gpa_0
+
+gpa_00 <- gpa_0 %>%
+  select(student_id)
+gpa_00
+
+
+```
+
+Join GPA data to Student Survey data table (20-21).
+```{r}
+#test. Use "inner_join". left_join doesn't work.
+both <- left_join(gpa_00, survey3_19_20_21, by = NULL)
+both
+
+both2 <- inner_join(gpa_00, survey3_19_20_21, by = NULL)
+both2
+
+#both Academic Years 19-20, 20-21
+gpa_survey_19_20_21 <- inner_join(survey3_19_20_21, gpa_0, by=NULL)
+gpa_survey_19_20_21  #It worked!
+
+#only Academic Year 20-21
+gpa_survey_20_21 <- inner_join(survey2_20_21, gpa2_20_21, by=NULL)
+gpa_survey_20_21 #MASTER table GPA and Student Survey 20-21
+
+```
+
+
+
+9th Grade (GPA)
+(20-21):     >2 visits:    4.019         *4.019-3.895 = 0.124  (20-21 is larger)
+            (1,2) visits:  3.903         *3.903-3.718 = 0.185  (20-21 is larger)
+            
+(19-20):     >2 visits:    3.895
+            (1,2) visits:  3.718
+
+```{r}
+#20-21
+gpa9_survey_19_20_21 <- gpa_survey_19_20_21 %>%
+  filter(GradeLevelID == "9")%>%
+  filter(AcademicYear == "2020-2021")
+gpa9_survey_19_20_21 #MASTER table 9th grade, GPA, 20-21
+
+gpa9_survey_19_20_21$num_visits_bin <-as.character(gpa9_survey_19_20_21$num_visits_bin)
+gpa9_survey_19_20_21
+
+#Regression
+gpa_9 <- lm(CumulativeWeightedGPA ~ num_visits_bin, data=gpa9_survey_19_20_21)
+summary(gpa_9)
+
+#Average GPA, 9th, (>2) visits to Camp RIO   (20-21)           GPA: 4.019
+gpa9_survey_19_20_21_average_bin1 <- gpa9_survey_19_20_21%>%
+  filter(num_visits_bin == 1)%>%
+  mutate(gpa_average = sum(CumulativeWeightedGPA)/115)
+gpa9_survey_19_20_21_average_bin1
+
+#Average GPA, 9th, (1,2) visits to Camp RIO    (20-21)          GPA: 3.903
+gpa9_survey_19_20_21_average_bin0 <- gpa9_survey_19_20_21%>%
+  filter(num_visits_bin == 0)%>%
+  mutate(gpa_average = sum(CumulativeWeightedGPA)/29)
+gpa9_survey_19_20_21_average_bin0
+
+
+#------------------------------------
+#19-20
+gpa9_survey_19<- gpa_survey_19_20_21 %>%
+  filter(GradeLevelID == "9")%>%
+  filter(AcademicYear == "2019-2020")
+gpa9_survey_19
+
+gpa9_survey_19$num_visits_bin <-as.character(gpa9_survey_19$num_visits_bin)
+gpa9_survey_19
+
+#Regression
+gpa_9_19 <- lm(CumulativeWeightedGPA ~ num_visits_bin, data=gpa9_survey_19)
+summary(gpa_9_19)
+
+#Average GPA, 9th, (>2) visits to Camp RIO  (19-20)            GPA: 3.895
+gpa9_survey_19_average_bin1 <- gpa9_survey_19%>%
+  filter(num_visits_bin == 1)%>%
+  mutate(gpa_average = sum(CumulativeWeightedGPA)/183)
+gpa9_survey_19_average_bin1
+
+#Average GPA, 9th, (1,2) visits to Camp RIO  (19-20)             GPA: 3.718
+gpa9_survey_19_average_bin0 <- gpa9_survey_19%>%
+  filter(num_visits_bin == 0)%>%
+  mutate(gpa_average = sum(CumulativeWeightedGPA)/17)
+gpa9_survey_19_average_bin0
+
+```
+
+
+10th Grade (GPA)
+(20-21):     >2 visits:    3.930         *3.930-3.934 = -0.004  (19-20 is larger)
+            (1,2) visits:  3.756         *3.756-2.558 =  1.198  (20-21 is larger)
+            
+(19-20):     >2 visits:    3.934
+            (1,2) visits:  2.558
+
+```{r}
+#20-21
+gpa10_survey_19_20_21 <- gpa_survey_19_20_21 %>%
+  filter(GradeLevelID == "10")%>%
+  filter(AcademicYear == "2020-2021")
+gpa10_survey_19_20_21
+
+gpa10_survey_19_20_21$num_visits_bin <-as.character(gpa10_survey_19_20_21$num_visits_bin)
+gpa10_survey_19_20_21
+
+#Regression
+gpa_10 <- lm(CumulativeWeightedGPA ~ num_visits_bin, data=gpa10_survey_19_20_21)
+summary(gpa_10)
+
+#Average GPA, 10th, (>2) visits to Camp RIO   (20-21)           GPA: 3.930
+gpa10_survey_19_20_21_average_bin1 <- gpa10_survey_19_20_21%>%
+  filter(num_visits_bin == 1)%>%
+  mutate(gpa_average = sum(CumulativeWeightedGPA)/183)
+gpa10_survey_19_20_21_average_bin1
+
+#Average GPA, 10th, (1,2) visits to Camp RIO    (20-21)          GPA: 3.756
+gpa10_survey_19_20_21_average_bin0 <- gpa10_survey_19_20_21%>%
+  filter(num_visits_bin == 0)%>%
+  mutate(gpa_average = sum(CumulativeWeightedGPA)/20)
+gpa10_survey_19_20_21_average_bin0
+#------------------------------------
+#19-20
+gpa10_survey_19<- gpa_survey_19_20_21 %>%
+  filter(GradeLevelID == "10")%>%
+  filter(AcademicYear == "2019-2020")
+gpa10_survey_19
+
+gpa10_survey_19$num_visits_bin <-as.character(gpa10_survey_19$num_visits_bin)
+gpa10_survey_19
+
+#Regression
+#gpa_10_19 <- lm(CumulativeWeightedGPA ~ num_visits_bin, data=gpa10_survey_19)
+#summary(gpa_10_19)
+
+#Average GPA, 10th, (>2) visits to Camp RIO  (19-20)            GPA: 3.934
+gpa10_survey_19_average_bin1 <- gpa10_survey_19%>%
+  filter(num_visits_bin == 1)%>%
+  mutate(gpa_average = sum(CumulativeWeightedGPA)/74)
+gpa10_survey_19_average_bin1
+
+#Average GPA, 10th, (1,2) visits to Camp RIO  (19-20)             GPA: 2.558
+gpa10_survey_19_average_bin0 <- gpa10_survey_19%>%
+  filter(num_visits_bin == 0)%>%
+  mutate(gpa_average = sum(CumulativeWeightedGPA)/17)
+gpa10_survey_19_average_bin0
+
+
+
+
+```
+
+11th Grade (GPA)
+(20-21):     >2 visits:    3.973         *3.973-3.943 = 0.030   (20-21 is larger)
+            (1,2) visits:  4.085         *4.085-3.923 = 0.162   (20-21 is larger)
+            
+(19-20):     >2 visits:    3.943
+            (1,2) visits:  3.923
+```{r}
+#20-21
+gpa11_survey_19_20_21 <- gpa_survey_19_20_21 %>%
+  filter(GradeLevelID == "11")%>%
+  filter(AcademicYear == "2020-2021")
+gpa11_survey_19_20_21
+
+gpa11_survey_19_20_21$num_visits_bin <-as.character(gpa11_survey_19_20_21$num_visits_bin)
+gpa11_survey_19_20_21
+
+#Regression
+gpa_11 <- lm(CumulativeWeightedGPA ~ num_visits_bin, data=gpa11_survey_19_20_21)
+summary(gpa_11)
+
+#Average GPA, 11th, (>2) visits to Camp RIO   (20-21)           GPA: 3.973
+gpa11_survey_19_20_21_average_bin1 <- gpa11_survey_19_20_21%>%
+  filter(num_visits_bin == 1)%>%
+  mutate(gpa_average = sum(CumulativeWeightedGPA)/72)
+gpa11_survey_19_20_21_average_bin1
+
+#Average GPA, 11th, (1,2) visits to Camp RIO    (20-21)          GPA: 4.085
+gpa11_survey_19_20_21_average_bin0 <- gpa11_survey_19_20_21%>%
+  filter(num_visits_bin == 0)%>%
+  mutate(gpa_average = sum(CumulativeWeightedGPA)/13)
+gpa11_survey_19_20_21_average_bin0
+#------------------------------------
+#19-20
+gpa11_survey_19<- gpa_survey_19_20_21 %>%
+  filter(GradeLevelID == "11")%>%
+  filter(AcademicYear == "2019-2020")
+gpa11_survey_19
+
+gpa11_survey_19$num_visits_bin <-as.character(gpa11_survey_19$num_visits_bin)
+gpa11_survey_19
+
+#Regression
+#gpa_10_19 <- lm(CumulativeWeightedGPA ~ num_visits_bin, data=gpa10_survey_19)
+#summary(gpa_10_19)
+
+#Average GPA, 11th, (>2) visits to Camp RIO  (19-20)            GPA: 3.943
+gpa11_survey_19_average_bin1 <- gpa11_survey_19%>%
+  filter(num_visits_bin == 1)%>%
+  mutate(gpa_average = sum(CumulativeWeightedGPA)/142)
+gpa11_survey_19_average_bin1
+
+#Average GPA, 11th, (1,2) visits to Camp RIO  (19-20)             GPA: 3.923
+gpa11_survey_19_average_bin0 <- gpa11_survey_19%>%
+  filter(num_visits_bin == 0)%>%
+  mutate(gpa_average = sum(CumulativeWeightedGPA)/36)
+gpa11_survey_19_average_bin0
+
+
+
+```
+
+12th Grade (GPA)
+
+(20-21):     >2 visits:    3.943         *3.943-4.057 = -0.114   (19-20 is larger)
+            (1,2) visits:  3.923         *3.923-3.880 =  0.043   (20-21 is larger)
+            
+(19-20):     >2 visits:    4.057
+            (1,2) visits:  3.880
+```{r}
+
+#20-21
+gpa12_survey_19_20_21 <- gpa_survey_19_20_21 %>%
+  filter(GradeLevelID == "12")%>%
+  filter(AcademicYear == "2020-2021")
+gpa12_survey_19_20_21
+
+gpa12_survey_19_20_21$num_visits_bin <-as.character(gpa12_survey_19_20_21$num_visits_bin)
+gpa12_survey_19_20_21
+
+#Regression
+#gpa_12 <- lm(CumulativeWeightedGPA ~ num_visits_bin, data=gpa12_survey_19_20_21)
+#summary(gpa_12)
+
+#Average GPA, 11th, (>2) visits to Camp RIO   (20-21)           GPA: 3.943
+gpa12_survey_19_20_21_average_bin1 <- gpa12_survey_19_20_21%>%
+  filter(num_visits_bin == 1)%>%
+  mutate(gpa_average = sum(CumulativeWeightedGPA)/142)
+gpa12_survey_19_20_21_average_bin1
+
+#Average GPA, 11th, (1,2) visits to Camp RIO    (20-21)          GPA: 3.923
+gpa12_survey_19_20_21_average_bin0 <- gpa12_survey_19_20_21%>%
+  filter(num_visits_bin == 0)%>%
+  mutate(gpa_average = sum(CumulativeWeightedGPA)/36)
+gpa12_survey_19_20_21_average_bin0
+#------------------------------------
+#19-20
+gpa12_survey_19<- gpa_survey_19_20_21 %>%
+  filter(GradeLevelID == "12")%>%
+  filter(AcademicYear == "2019-2020")
+gpa12_survey_19
+
+gpa12_survey_19$num_visits_bin <-as.character(gpa12_survey_19$num_visits_bin)
+gpa12_survey_19
+
+#Regression
+#gpa_10_19 <- lm(CumulativeWeightedGPA ~ num_visits_bin, data=gpa10_survey_19)
+#summary(gpa_10_19)
+
+#Average GPA, 11th, (>2) visits to Camp RIO  (19-20)            GPA: 4.057
+gpa12_survey_19_average_bin1 <- gpa12_survey_19%>%
+  filter(num_visits_bin == 1)%>%
+  mutate(gpa_average = sum(CumulativeWeightedGPA)/26)
+gpa12_survey_19_average_bin1
+
+#Average GPA, 11th, (1,2) visits to Camp RIO  (19-20)             GPA: 3.880
+gpa12_survey_19_average_bin0 <- gpa12_survey_19%>%
+  filter(num_visits_bin == 0)%>%
+  mutate(gpa_average = sum(CumulativeWeightedGPA)/2)
+gpa12_survey_19_average_bin0
+
+
+
+```
+
+
+Total GPA Average
+```{r}
+
+#(0-2 visits)                   TOTAL GPA Ave: 
+n <- 29 + 20 + 13 + 36
+n
+q9 <- 3.903*29
+q10 <- 3.756*20
+q11 <- 4.085*13
+q12 <- 3.923*36
+
+ave_0_2_gpa <- (q9 + q10 + q11 + q12)/n
+ave_0_2_gpa
+
+#--------------------------
+
+#(>2 visits)                   TOTAL GPA Ave:  
+n2 <- 115 + 183 + 72 + 142 
+n2
+r9 <- 4.019*115
+r10 <- 3.930*183
+r11 <- 3.973*72
+r12 <- 3.943*142
+
+ave_more_than_2_gpa <- (r9 + r10 + r11 + r12)/n2
+ave_more_than_2_gpa
+
+```
+
+
+NORMALITY TEST (GPA)
+
+9th, 10th, 11th, 12th, and 9th-12th(all) GPA Test for Normality.
+
+REsult: tested each grade, and "all" grades combined for Normality for bin1. None of them were normal, so don't have to repeat the tests for each of those for bin0. Go ahead and run Whitney Mann U non-parametric test for non-normal data to compare medians for GPA for each grade level, then for total average gpa for each bin (including all grades combined).
+```{r}
+#20-21
+gpa9_survey_19_20_21 <- gpa_survey_19_20_21 %>%
+  filter(GradeLevelID == "9")%>%
+  filter(AcademicYear == "2020-2021")
+gpa9_survey_19_20_21 #MASTER table 9th grade, GPA, 20-21
+
+#PREP DATA
+#Average GPA, 9th, (>2) visits to Camp RIO   (20-21)           GPA: 4.019
+gpa9_survey_19_20_21_average_bin1 #115 rows
+
+#Average GPA, 9th, (1,2) visits to Camp RIO    (20-21)          GPA: 3.903
+gpa9_survey_19_20_21_average_bin0  #29 rows
+
+
+
+
+#TEST
+#Shapiro Wilks null: data is normal. a sig. p value <0.05 means the null is not supported, and the data is not normal.
+
+#A) bin1, 9th            n=115
+#gpa9_survey_19_20_21_average_bin1 (df used)
+
+shapiro.test(gpa9_survey_19_20_21_average_bin1$CumulativeWeightedGPA) #p = 0.000000015 < 0.05 so it's NOT normal.
+
+#shapiro wilks says it's not Normal, but here's the visual inspection (qq plot).
+ggqqplot(gpa9_survey_19_20_21_average_bin1$CumulativeWeightedGPA, title = "Normal QQ Plot for GPA, 9th, (>2) Visits") #Departs from normality esp. in upper right part of plot.
+
+#density plot to see if it's "Bell" shaped
+library("ggpubr")
+ggdensity(gpa9_survey_19_20_21_average_bin1$CumulativeWeightedGPA, 
+          main = "Density plot of GPA, 9th",
+          xlab = "GPA, 9th, (>2 Visits)")    #It doesn't really look bell shaped. NOT normal. Almost bi-model.
+
+
+
+
+#B) bin1, 10th            n=183
+#gpa10_survey_19_20_21_average_bin1 (df used)
+
+shapiro.test(gpa10_survey_19_20_21_average_bin1$CumulativeWeightedGPA) #p = 0.0000000264 < 0.05 so it's NOT normal.
+
+#shapiro wilks says it's not Normal, but here's the visual inspection (qq plot).
+ggqqplot(gpa10_survey_19_20_21_average_bin1$CumulativeWeightedGPA, title = "Normal QQ Plot for GPA, 10th, (>2) Visits") #Departs from normality esp. in upper right, and lower left, parts of plot.
+
+#density plot to see if it's "Bell" shaped
+library("ggpubr")
+ggdensity(gpa10_survey_19_20_21_average_bin1$CumulativeWeightedGPA, 
+          main = "Density plot of GPA, 10th",
+          xlab = "GPA, 10th, (>2 Visits)")    #It doesn't really look bell shaped. NOT normal. Long, flat part near left side.
+
+
+
+
+#C) bin1, 11th            n=72
+#gpa11_survey_19_20_21_average_bin1 (df used)
+
+shapiro.test(gpa11_survey_19_20_21_average_bin1$CumulativeWeightedGPA) #p = 0.000517 < 0.05 so it's NOT normal.
+
+#shapiro wilks says it's not Normal, but here's the visual inspection (qq plot).
+ggqqplot(gpa11_survey_19_20_21_average_bin1$CumulativeWeightedGPA, title = "Normal QQ Plot for GPA, 11th, (>2) Visits") #Departs from normality esp. in upper right, and lower left, parts of plot.
+
+#density plot to see if it's "Bell" shaped
+library("ggpubr")
+ggdensity(gpa11_survey_19_20_21_average_bin1$CumulativeWeightedGPA, 
+          main = "Density plot of GPA, 11th",
+          xlab = "GPA, 11th, (>2 Visits)")    #It doesn't really look bell shaped. NOT normal. Long rise, then steep drop off.
+
+
+#D) bin1, 12th            n=142
+#gpa12_survey_19_20_21_average_bin1 (df used)
+
+shapiro.test(gpa12_survey_19_20_21_average_bin1$CumulativeWeightedGPA) #p = 0.0487 < 0.05 so it's NOT normal.
+
+#shapiro wilks says it's not Normal, but here's the visual inspection (qq plot).
+ggqqplot(gpa12_survey_19_20_21_average_bin1$CumulativeWeightedGPA, title = "Normal QQ Plot for GPA, 12th, (>2) Visits") #Departs from normality esp. in upper right, and lower left, parts of plot.
+
+#density plot to see if it's "Bell" shaped
+library("ggpubr")
+ggdensity(gpa12_survey_19_20_21_average_bin1$CumulativeWeightedGPA, 
+          main = "Density plot of GPA, 12th",
+          xlab = "GPA, 12th, (>2 Visits)")    #It doesn't really look bell shaped. NOT normal. Long rise, then steep drop off.
+
+
+
+
+
+#E) bin1, all grades, 9th, 10th, 11th, 12th            n=142
+#gpa12_survey_19_20_21_average_bin1 (df used)
+
+gpa_all_survey_19_20_21 <- gpa_survey_19_20_21 %>%
+  filter(AcademicYear == "2020-2021")%>%
+  filter(num_visits_bin == 1)%>%
+  filter(GradeLevelID != 8)%>%
+  filter(GradeLevelID != 6)
+gpa_all_survey_19_20_21
+
+
+shapiro.test(gpa_all_survey_19_20_21$CumulativeWeightedGPA) #p = 0.000000000000113 < 0.05 so it's NOT normal.
+
+#shapiro wilks says it's not Normal, but here's the visual inspection (qq plot).
+ggqqplot(gpa_all_survey_19_20_21$CumulativeWeightedGPA, title = "Normal QQ Plot for GPA, 9th-12th, (>2) Visits") #Departs from normality esp. in upper right, and lower left, parts of plot.
+
+#density plot to see if it's "Bell" shaped
+library("ggpubr")
+ggdensity(gpa_all_survey_19_20_21$CumulativeWeightedGPA, 
+          main = "Density plot of GPA, 9th-12th",
+          xlab = "GPA, 9th-12th, (>2 Visits)")    #It doesn't really look bell shaped. NOT normal. Long rise, then steep drop off. Looks close to bi-modal, as well (which is not Normal).
+
+
+
+
+```
+
+
+
+WHITNEY MANN U TEST (GPA)
+
+
+Compare 2 groups (0-2 visits, >2 visits) for each grade level; then for entire ave. GPA (including all grade levels in each group.) Use Whitney Mann U test for non-parametric data.
+```{r}
+#9th GRADE (bin1), >2 visits                NOT SIG DIFFERENT: 9th grade GPA (no difference)
+#gpa9_survey_19_20_21_average_bin1 
+
+GPA_9_bin1<-gpa9_survey_19_20_21_average_bin1 $CumulativeWeightedGPA
+GPA_9_bin1
+
+#11th GRADE (bin0), 0-2 visits
+#act_11_0
+
+GPA_9_bin0 <- gpa9_survey_19_20_21_average_bin0$CumulativeWeightedGPA
+GPA_9_bin0
+
+#Whitney Mann U Test (non-parametric test since the 2 groups of data were not both normal)
+
+wilcox.test(GPA_9_bin1, GPA_9_bin0)  #conclusion: Medians do NOT differ (they are not sig. different GPAs)
+
+wilcox.test(GPA_9_bin1, GPA_9_bin0, alternative = "greater") #Not sig. different (no difference)
+wilcox.test(GPA_9_bin1, GPA_9_bin0, alternative = "less") #Not sig. differernt (no diff)
+
+#-------------------------------
+#10th GRADE (bin1), >2 visits                NOT SIG DIFFERENT: 10th grade GPA (no difference)
+#gpa10_survey_19_20_21_average_bin1 (df used)
+
+GPA_10_bin1<-gpa10_survey_19_20_21_average_bin1 $CumulativeWeightedGPA
+GPA_10_bin1
+
+#10th GRADE (bin0), 0-2 visits
+
+GPA_10_bin0 <- gpa10_survey_19_20_21_average_bin0$CumulativeWeightedGPA
+GPA_10_bin0
+
+#Whitney Mann U Test (non-parametric test since the 2 groups of data were not both normal)
+
+wilcox.test(GPA_10_bin1, GPA_10_bin0)  #conclusion: Medians do NOT differ (they are not sig. different GPAs)
+
+wilcox.test(GPA_10_bin1, GPA_10_bin0, alternative = "greater") #Not sig. different (no difference)
+wilcox.test(GPA_10_bin1, GPA_10_bin0, alternative = "less") #Not sig. differernt (no diff)
+
+#---------------------------------
+
+#11th GRADE (bin1), >2 visits                NOT SIG DIFFERENT: 11th grade GPA (no difference)
+#gpa11_survey_19_20_21_average_bin1 (df used)
+
+GPA_11_bin1<-gpa11_survey_19_20_21_average_bin1 $CumulativeWeightedGPA
+GPA_11_bin1
+
+#10th GRADE (bin0), 0-2 visits
+
+GPA_11_bin0 <- gpa11_survey_19_20_21_average_bin0$CumulativeWeightedGPA
+GPA_11_bin0
+
+#Whitney Mann U Test (non-parametric test since the 2 groups of data were not both normal)
+
+wilcox.test(GPA_11_bin1, GPA_11_bin0)  #conclusion: Medians do NOT differ (they are not sig. different GPAs)
+
+wilcox.test(GPA_11_bin1, GPA_11_bin0, alternative = "greater") #Not sig. different (no difference)
+wilcox.test(GPA_11_bin1, GPA_11_bin0, alternative = "less") #Not sig. differernt (no diff)
+
+#--------------------------------------
+
+#12th GRADE (bin1), >2 visits                NOT SIG DIFFERENT: 12th grade GPA (no difference)
+#gpa12_survey_19_20_21_average_bin1 (df used)
+
+GPA_12_bin1<-gpa12_survey_19_20_21_average_bin1 $CumulativeWeightedGPA
+GPA_12_bin1
+
+#10th GRADE (bin0), 0-2 visits
+
+GPA_12_bin0 <- gpa12_survey_19_20_21_average_bin0$CumulativeWeightedGPA
+GPA_12_bin0
+
+#Whitney Mann U Test (non-parametric test since the 2 groups of data were not both normal)
+
+wilcox.test(GPA_12_bin1, GPA_12_bin0)  #conclusion: Medians do NOT differ (they are not sig. different GPAs)
+
+wilcox.test(GPA_12_bin1, GPA_12_bin0, alternative = "greater") #Not sig. different (no difference)
+wilcox.test(GPA_12_bin1, GPA_12_bin0, alternative = "less") #Not sig. differernt (no diff)
+
+
+#-------------------------------------------
+#TOTAL bin1 (all grades, 9th - 12th), >2 visits         NOT SIG. different: All 9th-12th, GPA (for 2-tailed, and 1-tailed "less")
+#gpa_all_survey_20_21_bin1  (df used)
+gpa_all_survey_20_21_bin1 <- gpa_survey_19_20_21 %>%
+  filter(AcademicYear == "2020-2021")%>%
+  filter(num_visits_bin == 1)%>%
+  filter(GradeLevelID != 8)%>%
+  filter(GradeLevelID != 6)
+gpa_all_survey_20_21_bin1
+
+#total bin0 (all grades 9th-12th)
+gpa_all_survey_20_21_bin0 <- gpa_survey_19_20_21 %>%
+  filter(AcademicYear == "2020-2021")%>%
+  filter(num_visits_bin == 0)%>%
+  filter(GradeLevelID != 8)%>%
+  filter(GradeLevelID != 6)
+gpa_all_survey_20_21_bin0
+
+
+gpa_both_bin1<-gpa_all_survey_20_21_bin1$CumulativeWeightedGPA
+gpa_both_bin1
+
+#TOTAL bin0 (both 11th, 12th grades), 0-2 visits
+#act_survey_20_21_both_grades_bin0   (df used)
+
+gpa_both_bin0 <- gpa_all_survey_20_21_bin0$CumulativeWeightedGPA
+gpa_both_bin0
+
+#Whitney Mann U Test (non-parametric test since the 2 groups of data were not both normal) *sig. p-value means they are different.
+
+wilcox.test(gpa_both_bin0, gpa_both_bin1) #not sig. (2-sided), not different
+
+wilcox.test(gpa_both_bin0, gpa_both_bin1, alternative = "greater") #was NOT sig. (1-sided), not different
+wilcox.test(gpa_both_bin0, gpa_both_bin1, alternative = "less") #not sig., not differetn on lowest test scores,  (1-sided)
+
+
+
+#---------------------------
+#boxplot  -this is the ACT boxplot code; needs to be changed to the GPA dfs/code.
+
+#table for 11th bin1, bin0 in same df
+#Table of all 11th graders who took ACT in 2020.
+
+#act_survey_20_21_11th <- act_survey_20_21 %>%
+  #filter(grade_level == 11)
+#act_survey_20_21_11th
+
+
+
+#table for 12th bin1, bin0, in same df
+#Table of all 12th graders who took ACT in 2020.
+#act_survey_20_21_12th <- act_survey_20_21 %>%
+ # filter(grade_level == 12)
+#act_survey_20_21_12th
+#---------------------------------------
+
+#11th GRADE ACT: boxplots below:
+#box_11 <- boxplot(science_scale_score~ num_visits_bin, data = act_survey_20_21_11th)
+#box_11
+
+#12th GRADE ACT: boxplots below:
+#box_12 <- boxplot(science_scale_score~ num_visits_bin, data = act_survey_20_21_12th)
+#box_12
+
+
+```
+
+
+
+
+
+
+//
+
+
+
+
+
+GRADES
+
+Get the Grades table.
+```{r}
+library(dplyr)
+head(science_grades)
+```
+
+
+
+Join GRADES table to Student Survey Master table (both years); it's called "science_grades_master_survey" table.
+```{r}
+# 'science_grades' table has both years (19-20) and (20-21), and all Grade Level IDs.
+
+#Add a "student_id" = StudentNumber, in order to join to master survey table by the col. "student_id".
+
+science_grades_student_id <- science_grades %>%
+  mutate(student_id = StudentNumber)
+science_grades_student_id
+
+#master student survey table (with StudentID, College Prep, Academy, BOTH years) is called: "survey3_19_20_21"
+science_grades_master_survey <- inner_join(science_grades_student_id, survey3_19_20_21, by=NULL)
+
+#Master GRADES table is called:
+science_grades_master_survey
+science_grades_master_survey2 <- science_grades_master_survey %>%
+  clean_names()
+science_grades_master_survey2
+
+
+
+```
+
+GRADES - filter for (20-21) (9th, 10th, 11th, 12th - filter on GradeLevelID, too)
+```{r}
+
+#9th GRADE grades
+GRADES_9th_20_21 <-   science_grades_master_survey %>%
+  filter(GradeLevelID == 9, AcademicYear == '2020-2021')
+
+View(GRADES_9th_20_21)
+
+GRADES2_9th_20_21 <- GRADES_9th_20_21 %>%
+  clean_names()
+GRADES2_9th_20_21
+
+#GRADES (9th, 20-21) select the variables I want
+GRADES3_9th_20_21 <- GRADES2_9th_20_21 %>%
+  select(student_id, percentage_grade, num_visits_bin)
+GRADES3_9th_20_21
+GRADES3_9th_20_21$percentage_grade <- as.numeric(GRADES3_9th_20_21$percentage_grade)
+
+#9th Grade Master Copy
+GRADES3_9th_20_21
+
+#--------------------------------
+
+#10th GRADE grades
+GRADES_10th_20_21 <-   science_grades_master_survey %>%
+  filter(GradeLevelID == 10, AcademicYear == '2020-2021')
+
+View(GRADES_10th_20_21)
+
+GRADES2_10th_20_21 <- GRADES_10th_20_21 %>%
+  clean_names()
+GRADES2_10th_20_21
+
+#GRADES (9th, 20-21) select the variables I want
+GRADES3_10th_20_21 <- GRADES2_10th_20_21 %>%
+  select(student_id, percentage_grade, num_visits_bin)
+GRADES3_10th_20_21
+GRADES3_10th_20_21$percentage_grade <- as.numeric(GRADES3_10th_20_21$percentage_grade)
+
+#10th Grade Master Table
+GRADES3_10th_20_21
+
+#--------------------------------------
+#11th GRADE grades
+GRADES_11th_20_21 <-   science_grades_master_survey %>%
+  filter(GradeLevelID == 11, AcademicYear == '2020-2021')
+
+View(GRADES_11th_20_21)
+
+GRADES2_11th_20_21 <- GRADES_11th_20_21 %>%
+  clean_names()
+GRADES2_11th_20_21
+
+#GRADES (9th, 20-21) select the variables I want
+GRADES3_11th_20_21 <- GRADES2_11th_20_21 %>%
+  select(student_id, percentage_grade, num_visits_bin)
+GRADES3_11th_20_21
+GRADES3_11th_20_21$percentage_grade <- as.numeric(GRADES3_11th_20_21$percentage_grade)
+
+#11th Grade Master Table
+GRADES3_11th_20_21
+
+#--------------------------------------
+#12th GRADE grades
+GRADES_12th_20_21 <-   science_grades_master_survey %>%
+  filter(GradeLevelID == 12, AcademicYear == '2020-2021')
+
+View(GRADES_12th_20_21)
+
+GRADES2_12th_20_21 <- GRADES_12th_20_21 %>%
+  clean_names()
+GRADES2_12th_20_21
+
+#GRADES (9th, 20-21) select the variables I want
+GRADES3_12th_20_21 <- GRADES2_12th_20_21 %>%
+  select(student_id, percentage_grade, num_visits_bin)
+GRADES3_12th_20_21
+GRADES3_12th_20_21$percentage_grade <- as.numeric(GRADES3_12th_20_21$percentage_grade)
+
+#12th Grade Master Table
+GRADES3_12th_20_21
+
+
+
+```
+9th Ave. Science GRADES (20-21) (>2 visits)   (bin1), (bin0)
+```{r}
+#Average SCIECE GRADES, 9th, (>2) visits to Camp RIO   (20-21)   (bin1)        AVE GRADE: 88.461
+GRADES3_9th_20_21_average_bin1 <- GRADES3_9th_20_21%>%
+  filter(num_visits_bin == 1)%>%
+  mutate(percentage_grade_average = percentage_grade/100)
+GRADES3_9th_20_21_average_bin1 #863 rows
+
+GRADES3_omit_na_bin1 <- na.omit(GRADES3_9th_20_21_average_bin1)
+GRADES3_omit_na_bin1  #805 rows after omitting the NAs
+
+x <- GRADES3_omit_na_bin1%>%
+  mutate(sci_grade_ave = sum(percentage_grade)/805)
+x 
+   
+
+#Average GRADES, 9th, (1,2) visits to Camp RIO    (20-21) (bin0)                AVE GRADE: 85.318
+GRADES3_9th_20_21_average_bin0 <- GRADES3_9th_20_21%>%
+  filter(num_visits_bin == 0)%>%
+  mutate(percentage_grade_average = percentage_grade/100)
+GRADES3_9th_20_21_average_bin0 #232 rows
+
+GRADES3_omit_na_bin0 <- na.omit(GRADES3_9th_20_21_average_bin0)
+GRADES3_omit_na_bin0  #211 rows after omitting the NAs
+
+y <- GRADES3_omit_na_bin0%>%
+  mutate(sci_grade_ave = sum(percentage_grade)/211)
+y 
+
+
+
+```
+10th Ave. Science GRADES (20-21) (>2 visits)   (bin1) (bin0)
+```{r}
+#Average SCIECE GRADES, 10th, (>2) visits to Camp RIO   (20-21)    (bin1)       AVE GRADE: 85.209
+GRADES3_10th_20_21_average_bin1 <- GRADES3_10th_20_21%>%
+  filter(num_visits_bin == 1)%>%
+  mutate(percentage_grade_average = percentage_grade/100)
+GRADES3_10th_20_21_average_bin1 #1462 rows
+
+GRADES10_omit_na_bin1 <- na.omit(GRADES3_10th_20_21_average_bin1)
+GRADES10_omit_na_bin1  #1323 rows after omitting the NAs
+
+x10 <- GRADES10_omit_na_bin1%>%
+  mutate(sci_grade_ave = sum(percentage_grade)/1323)
+x10
+   
+
+#Average GRADES, 10th, (1,2) visits to Camp RIO    (20-21)    (bin0)             AVE GRADE: 82.222
+GRADES3_10th_20_21_average_bin0 <- GRADES3_10th_20_21%>%
+  filter(num_visits_bin == 0)%>%
+  mutate(percentage_grade_average = percentage_grade/100)
+GRADES3_10th_20_21_average_bin0 #176 rows
+
+GRADES10_omit_na_bin0 <- na.omit(GRADES3_10th_20_21_average_bin0)
+GRADES10_omit_na_bin0  #162 rows after omitting the NAs
+
+y10 <- GRADES10_omit_na_bin0%>%
+  mutate(sci_grade_ave = sum(percentage_grade)/162)
+y10 
+
+
+
+```
+
+11th Ave. Science GRADES (20-21) (>2 visits)   (bin1) (bin0)
+```{r}
+#Average SCIECE GRADES, 11th, (>2) visits to Camp RIO   (20-21)   (bin1)        AVE GRADE: 85.116
+GRADES3_11th_20_21_average_bin1 <- GRADES3_11th_20_21%>%
+  filter(num_visits_bin == 1)%>%
+  mutate(percentage_grade_average = percentage_grade/100)
+GRADES3_11th_20_21_average_bin1 #554 rows
+
+GRADES11_omit_na_bin1 <- na.omit(GRADES3_11th_20_21_average_bin1)
+GRADES11_omit_na_bin1  #534 rows after omitting the NAs
+
+x11 <- GRADES11_omit_na_bin1%>%
+  mutate(sci_grade_ave = sum(percentage_grade)/534)
+x11
+   
+
+#Average GRADES, 11th, (1,2) visits to Camp RIO    (20-21)    (bin0)             AVE GRADE: 85.269
+GRADES3_11th_20_21_average_bin0 <- GRADES3_11th_20_21%>%
+  filter(num_visits_bin == 0)%>%
+  mutate(percentage_grade_average = percentage_grade/100)
+GRADES3_11th_20_21_average_bin0 #99 rows
+
+GRADES11_omit_na_bin0 <- na.omit(GRADES3_11th_20_21_average_bin0)
+GRADES11_omit_na_bin0  #93 rows after omitting the NAs
+
+y11 <- GRADES11_omit_na_bin0%>%
+  mutate(sci_grade_ave = sum(percentage_grade)/93)
+y11 
+
+```
+
+12th Ave. Science GRADES (20-21) (>2 visits)   (bin1) (bin0)
+```{r}
+#Average SCIENCE GRADES, 12th, (>2) visits to Camp RIO   (20-21)   (bin1)        AVE GRADE: 84.053 
+GRADES3_12th_20_21_average_bin1 <- GRADES3_12th_20_21%>%
+  filter(num_visits_bin == 1)%>%
+  mutate(percentage_grade_average = percentage_grade/100)
+GRADES3_12th_20_21_average_bin1 #1257 rows
+
+GRADES12_omit_na_bin1 <- na.omit(GRADES3_12th_20_21_average_bin1)
+GRADES12_omit_na_bin1  #1097 rows after omitting the NAs
+
+x12 <- GRADES12_omit_na_bin1%>%
+  mutate(sci_grade_ave = sum(percentage_grade)/1097)
+x12
+   
+
+#Average sci. GRADES, 12th, (1,2) visits to Camp RIO    (20-21)    (bin0)        AVE GRADE: 84.388 
+GRADES3_12th_20_21_average_bin0 <- GRADES3_12th_20_21%>%
+  filter(num_visits_bin == 0)%>%
+  mutate(percentage_grade_average = percentage_grade/100)
+GRADES3_12th_20_21_average_bin0 #297 rows
+
+GRADES12_omit_na_bin0 <- na.omit(GRADES3_12th_20_21_average_bin0)
+GRADES12_omit_na_bin0  #273 rows after omitting the NAs
+
+y12 <- GRADES12_omit_na_bin0%>%
+  mutate(sci_grade_ave = sum(percentage_grade)/273)
+y12
+```
+
+Total SCI GRADES Average
+```{r}
+
+#(0-2 visits)                   TOTAL AVE SCi GRADE: 84.290
+N <- 211 + 162 + 93 + 273
+N
+z9 <- 85.318*211
+z10 <- 82.222*162
+z11 <- 85.269*93
+z12 <- 84.388*273
+
+ave_0_2 <- (z9 + z10 + z11 + z12)/N
+ave_0_2
+
+#--------------------------
+
+#(>2 visits)                   TOTAL AVE SCi GRADE: 85.555
+N2 <- 805 + 1323 + 534 + 1097
+N2
+t9 <- 88.461*805
+t10 <- 85.209*1323
+t11 <- 85.116*534
+t12 <- 84.053*1097
+
+ave_more_than_2 <- (t9 + t10 + t11 + t12)/N2
+ave_more_than_2
+
+
+```
+
+
+NORMALITY TEST (GPA)
+
+9th, 10th, 11th, 12th, and 9th-12th(all) GPA Test for Normality.
+
+REsult: tested each grade, and "all" grades combined for Normality for bin1. None of them were normal, so don't have to repeat the tests for each of those for bin0. Go ahead and run Whitney Mann U non-parametric test for non-normal data to compare medians for GPA for each grade level, then for total average gpa for each bin (including all grades combined).
+
+```{r}
+#(20-21) 9th grade GRADES
+
+#PREP DATA
+#GRADES, 9th, (>2) visits to Camp RIO   (20-21)           
+x #(bin1) #805 rows
+
+#GRADES, 9th, (1,2) visits to Camp RIO    (20-21)        
+y #(bin0)  #211 rows
+
+
+#TEST
+#Shapiro Wilks null: data is normal. a sig. p value <0.05 means the null is not supported, and the data is not normal.
+
+#A) bin1, 9th            n=805
+#x (df used)
+
+shapiro.test(x$percentage_grade) #p = 0.00000000000000022 < 0.05 so it's NOT normal.
+
+#shapiro wilks says it's not Normal, but here's the visual inspection (qq plot).
+ggqqplot(x$percentage_grade, title = "Normal QQ Plot for Percent Grade, 9th, (>2) Visits") #Departs from normality esp. in upper right part of plot.
+
+#density plot to see if it's "Bell" shaped
+library("ggpubr")
+ggdensity(x$percentage_grade, 
+          main = "Density plot of Percent Grade, 9th",
+          xlab = "Percent Grade, 9th, (>2 Visits)")    #It doesn'tlook bell shaped. NOT normal.
+
+#---------------------------------------------
+
+#(20-21) 10th grade GRADES
+
+#PREP DATA
+#GRADES, 10th, (>2) visits to Camp RIO   (20-21)           
+x10 #(bin1) #805 rows
+
+#GRADES, 10th, (1,2) visits to Camp RIO    (20-21)        
+y10 #(bin0)  #211 rows
+
+
+#TEST
+#Shapiro Wilks null: data is normal. a sig. p value <0.05 means the null is not supported, and the data is not normal.
+
+#A) bin1, 10th            n=805
+#x (df used)
+
+shapiro.test(x10$percentage_grade) #p = 0.00000000000000022 < 0.05 so it's NOT normal.
+
+#shapiro wilks says it's not Normal, but here's the visual inspection (qq plot).
+ggqqplot(x10$percentage_grade, title = "Normal QQ Plot for Percent Grade, 10th, (>2) Visits") #Departs from normality esp. in upper right part of plot.
+
+#density plot to see if it's "Bell" shaped
+library("ggpubr")
+ggdensity(x10$percentage_grade, 
+          main = "Density plot of Percent Grade, 10th",
+          xlab = "Percent Grade, 10th, (>2 Visits)")    #It doesn'tlook bell shaped. NOT normal.
+
+#-----------------------------------------------
+
+#(20-21) 11th grade GRADES
+
+#PREP DATA
+#GRADES, 11th, (>2) visits to Camp RIO   (20-21)           
+x11 #(bin1) #805 rows
+
+#GRADES, 11th, (1,2) visits to Camp RIO    (20-21)        
+y11 #(bin0)  #211 rows
+
+
+#TEST
+#Shapiro Wilks null: data is normal. a sig. p value <0.05 means the null is not supported, and the data is not normal.
+
+#A) bin1, 11th            n=805
+#x (df used)
+
+shapiro.test(x11$percentage_grade) #p = 0.00000000000000022 < 0.05 so it's NOT normal.
+
+#shapiro wilks says it's not Normal, but here's the visual inspection (qq plot).
+ggqqplot(x11$percentage_grade, title = "Normal QQ Plot for Percent Grade, 11th, (>2) Visits") #Departs from normality esp. in upper right part of plot.
+
+#density plot to see if it's "Bell" shaped
+library("ggpubr")
+ggdensity(x11$percentage_grade, 
+          main = "Density plot of Percent Grade, 11th",
+          xlab = "Percent Grade, 11th, (>2 Visits)")    #It doesn'tlook bell shaped. NOT normal.
+#-------------------------------------------
+
+
+#(20-21) 12th grade GRADES
+
+#PREP DATA
+#GRADES, 12th, (>2) visits to Camp RIO   (20-21)           
+x12 #(bin1) #805 rows
+
+#GRADES, 11th, (1,2) visits to Camp RIO    (20-21)        
+y12 #(bin0)  #211 rows
+
+
+#TEST
+#Shapiro Wilks null: data is normal. a sig. p value <0.05 means the null is not supported, and the data is not normal.
+
+#A) bin1, 12th            n=805
+#x (df used)
+
+shapiro.test(x12$percentage_grade) #p = 0.00000000000000022 < 0.05 so it's NOT normal.
+
+#shapiro wilks says it's not Normal, but here's the visual inspection (qq plot).
+ggqqplot(x12$percentage_grade, title = "Normal QQ Plot for Percent Grade, 12th, (>2) Visits") #Departs from normality esp. in upper right part of plot.
+
+#density plot to see if it's "Bell" shaped
+library("ggpubr")
+ggdensity(x12$percentage_grade, 
+          main = "Density plot of Percent Grade, 12th",
+          xlab = "Percent Grade, 12th, (>2 Visits)")    #It doesn'tlook bell shaped. NOT normal. Looks bi-modal.
+
+#----------------------------------
+
+#(20-21) all grades, 9th-12th grade GRADES
+
+#PREP DATA
+#GRADES 9-12th, (>2) visits to Camp RIO   (20-21) 
+#science_grades_master_survey (original df used, all grade levels 1-12th)
+
+sci_grades_survey_20_21_bin1 <- science_grades_master_survey %>%
+  filter(AcademicYear == "2020-2021") %>%
+  filter(num_visits_bin == 1)%>%
+  filter(GradeLevelID !=1)%>%
+  filter(GradeLevelID !=2)%>%
+  filter(GradeLevelID !=3)%>%
+  filter(GradeLevelID !=4)%>%
+  filter(GradeLevelID !=5)%>%
+  filter(GradeLevelID !=6)%>%
+  filter(GradeLevelID !=7)%>%
+  filter(GradeLevelID !=8)   #remove 1st-8th grades; left with 9th-12th grades remaining.
+  
+sci_grades_survey_20_21_bin1
+
+xall_bin1<- sci_grades_survey_20_21_bin1
+
+xall_bin1 #(bin1) #4,136 rows
+
+#Average GPA, 11th, (1,2) visits to Camp RIO    (20-21)        
+
+sci_grades_survey_20_21_bin0 <- science_grades_master_survey %>%
+  filter(AcademicYear == "2020-2021") %>%
+  filter(num_visits_bin == 0)%>%
+  filter(GradeLevelID !=1)%>%
+  filter(GradeLevelID !=2)%>%
+  filter(GradeLevelID !=3)%>%
+  filter(GradeLevelID !=4)%>%
+  filter(GradeLevelID !=5)%>%
+  filter(GradeLevelID !=6)%>%
+  filter(GradeLevelID !=7)%>%
+  filter(GradeLevelID !=8)   #remove 1st-8th grades; left with 9th-12th grades remaining.
+  
+sci_grades_survey_20_21_bin0
+
+yall_bin0<- sci_grades_survey_20_21_bin0
+
+yall_bin0 #(bin0)  #804 rows
+
+
+
+#TEST
+#Shapiro Wilkes null: data is normal. a sig. p value <0.05 means the null is not supported, and the data is not normal.
+
+#A) bin1, all grades 9th-12th            n=4,136
+#x (df used)
+
+shapiro.test(xall_bin1$PercentageGrade) #p = 0.00000000000000022 < 0.05 so it's NOT normal.
+
+#shapiro wilks says it's not Normal, but here's the visual inspection (qq plot).
+ggqqplot(xall_bin1$PercentageGrade, title = "Normal QQ Plot for Percent Grade, 9th-12th, (>2) Visits") #Departs from normality esp. in upper right part of plot.
+
+#density plot to see if it's "Bell" shaped
+library("ggpubr")
+ggdensity(xall_bin1$PercentageGrade, 
+          main = "Density plot of Percent Grade, all levels 9th-12th",
+          xlab = "Percent Grade, 9th-12th, (>2 Visits)")    #It doesn'tlook bell shaped. NOT normal. 
+
+#TEST
+#Shapiro Wilkes null: data is normal. a sig. p value <0.05 means the null is not supported, and the data is not normal.
+
+#B) bin0, all grades 9th-12th            n=804
+#x (df used)
+
+shapiro.test(yall_bin0$PercentageGrade) #p = 0.00000000000000022 < 0.05 so it's NOT normal.
+
+#shapiro wilks says it's not Normal, but here's the visual inspection (qq plot).
+ggqqplot(yall_bin0$PercentageGrade, title = "Normal QQ Plot for Percent Grade, 9th-12th, (>2) Visits") #Departs from normality esp. in upper right part of plot.
+
+#density plot to see if it's "Bell" shaped
+library("ggpubr")
+ggdensity(yall_bin0$PercentageGrade, 
+          main = "Density plot of Percent Grade, 9th-12th",
+          xlab = "Percent Grade, 9th-12th, (>2 Visits)")    #It doesn't look bell shaped. NOT normal. Looks bi-modal.
+
+
+
+
+```
+
+WHITNEY MANN U TEST (GPA)
+
+
+Compare 2 groups (0-2 visits, >2 visits) for each grade level; then for entire ave. GPA (including all grade levels in each group.) Use Whitney Mann U test for non-parametric data.
+```{r}
+#9th GRADES (bin1), >2 visits               SIG DIFFERENT: 9th grade GRADES (difference in medians for 2-tailed, also for higher percentage grades but not for lower, in the 1-tailed)
+#x (df used)
+
+GRADES_9_bin1<-x$percentage_grade
+GRADES_9_bin1
+
+#9th GRADE (bin0), 0-2 visits
+#y (df used)
+
+GRADES_9_bin0 <- y$percentage_grade
+GRADES_9_bin0
+
+#Whitney Mann U Test (non-parametric test since the 2 groups of data were not both normal)
+
+wilcox.test(GRADES_9_bin1, GRADES_9_bin0)  #conclusion: YES sig.; Medians DO differ (they are sig. different)
+
+wilcox.test(GRADES_9_bin1, GRADES_9_bin0, alternative = "greater") #YES, it is sig. different (there's a difference in percentage_grade, for highest grades)
+wilcox.test(GRADES_9_bin1, GRADES_9_bin0, alternative = "less") #Not sig. differernt (no diff. for lower percentage grades)
+
+#-------------------------------
+#10th GRADES (bin1), >2 visits               SIG DIFFERENT: 10th grade GRADES (difference in medians for 2-tailed, also for higher percentage grades but not for lower, in the 1-tailed)
+#x (df used)
+
+GRADES_10_bin1<-x10$percentage_grade
+GRADES_10_bin1
+
+#10th GRADE (bin0), 0-2 visits
+#y (df used)
+
+GRADES_10_bin0 <- y10$percentage_grade
+GRADES_10_bin0
+
+#Whitney Mann U Test (non-parametric test since the 2 groups of data were not both normal)
+
+wilcox.test(GRADES_10_bin1, GRADES_10_bin0)  #conclusion: YES sig.; Medians DO differ (they are sig. different)
+
+wilcox.test(GRADES_10_bin1, GRADES_10_bin0, alternative = "greater") #YES, it is sig. different (there's a difference in percentage_grade, for highest grades)
+wilcox.test(GRADES_10_bin1, GRADES_10_bin0, alternative = "less") #Not sig. differernt (no diff. for lower percentage grades)
+
+#---------------------------------
+
+#11th GRADES (bin1), >2 visits               SIG DIFFERENT: 11th grade GRADES (difference in medians for 2-tailed, also for higher percentage grades but not for lower, in the 1-tailed)
+#x (df used)
+
+GRADES_11_bin1<-x11$percentage_grade
+GRADES_11_bin1
+
+#11th GRADE (bin0), 0-2 visits
+#y (df used)
+
+GRADES_11_bin0 <- y11$percentage_grade
+GRADES_11_bin0
+
+#Whitney Mann U Test (non-parametric test since the 2 groups of data were not both normal)
+
+wilcox.test(GRADES_11_bin1, GRADES_11_bin0)  #conclusion: YES sig.; Medians DO differ (they are sig. different)
+
+wilcox.test(GRADES_11_bin1, GRADES_11_bin0, alternative = "greater") #YES, it is sig. different (there's a difference in percentage_grade, for highest grades)
+wilcox.test(GRADES_11_bin1, GRADES_11_bin0, alternative = "less") #Not sig. differernt (no diff. for lower percentage grades)
+
+#--------------------------------------
+
+#12th GRADES (bin1), >2 visits               NO SIG DIFFERENT: 12th grade GRADES 
+#x (df used)
+
+GRADES_12_bin1<-x12$percentage_grade
+GRADES_12_bin1
+
+#12th GRADE (bin0), 0-2 visits
+#y (df used)
+
+GRADES_12_bin0 <- y12$percentage_grade
+GRADES_12_bin0
+
+#Whitney Mann U Test (non-parametric test since the 2 groups of data were not both normal)
+
+wilcox.test(GRADES_12_bin1, GRADES_12_bin0)  #conclusion: NOT sig. medians do NOT differ 
+
+wilcox.test(GRADES_12_bin1, GRADES_12_bin0, alternative = "greater") #NOT sig. different (there's NO difference in percentage_grade, for highest grades)
+wilcox.test(GRADES_12_bin1, GRADES_12_bin0, alternative = "less") #Not sig. differernt (no diff. for lower percentage grades)
+
+
+#-------------------------------------------
+#TOTAL bin1 (all grades, 9th - 12th), >2 visits     SIG. different: All 9th-12th, GRADES (for 2-tailed, and 1-tailed "greater"); no sig. difference for 1-tailed "less"
+
+#xall_bin1  (df used, col names are not clean in this table)
+
+GRADES_a_bin1<-xall_bin1$PercentageGrade
+GRADES_a_bin1
+
+#12th GRADE (bin0), 0-2 visits
+#y (df used)
+
+GRADES_a_bin0 <- yall_bin0$PercentageGrade  #col names are not clean in table "GRADES_a_bin0"
+GRADES_a_bin0
+
+#Whitney Mann U Test (non-parametric test since the 2 groups of data were not both normal)
+
+wilcox.test(GRADES_a_bin1, GRADES_a_bin0)  #conclusion: YES, it IS sig. medians DO differ 
+
+wilcox.test(GRADES_a_bin1, GRADES_a_bin0, alternative = "greater") #YES, it IS sig. different (there's a difference in percentage_grade, for highest grades)
+wilcox.test(GRADES_a_bin1, GRADES_a_bin0, alternative = "less") #Not sig. differernt (no diff. for lower percentage grades)
+
+
+gpa_both_bin1<-gpa_all_survey_20_21_bin1$CumulativeWeightedGPA
+gpa_both_bin1
+
+#TOTAL bin0 (both 11th, 12th grades), 0-2 visits
+#act_survey_20_21_both_grades_bin0   (df used)
+
+gpa_both_bin0 <- gpa_all_survey_20_21_bin0$CumulativeWeightedGPA
+gpa_both_bin0
+
+#Whitney Mann U Test (non-parametric test since the 2 groups of data were not both normal) *sig. p-value means they are different.
+
+wilcox.test(gpa_both_bin0, gpa_both_bin1) #not sig. (2-sided), not different
+
+wilcox.test(gpa_both_bin0, gpa_both_bin1, alternative = "greater") #was NOT sig. (1-sided), not different
+wilcox.test(gpa_both_bin0, gpa_both_bin1, alternative = "less") #not sig., not differetn on lowest test scores,  (1-sided)
+
+
+
+#---------------------------
+#boxplot  -this is the ACT boxplot code; needs to be changed to the GPA dfs/code.
+
+#table for 11th bin1, bin0 in same df
+#Table of all 11th graders who took ACT in 2020.
+
+#act_survey_20_21_11th <- act_survey_20_21 %>%
+  #filter(grade_level == 11)
+#act_survey_20_21_11th
+
+
+
+#table for 12th bin1, bin0, in same df
+#Table of all 12th graders who took ACT in 2020.
+#act_survey_20_21_12th <- act_survey_20_21 %>%
+ # filter(grade_level == 12)
+#act_survey_20_21_12th
+#---------------------------------------
+
+#11th GRADE ACT: boxplots below:
+#box_11 <- boxplot(science_scale_score~ num_visits_bin, data = act_survey_20_21_11th)
+#box_11
+
+#12th GRADE ACT: boxplots below:
+#box_12 <- boxplot(science_scale_score~ num_visits_bin, data = act_survey_20_21_12th)
+#box_12
+
+```
+
+
+
+
+
+
+//
+
+
+ACT
+
+
+ACT data
+```{r}
+
+act <- get_table(.table_name = "ACT", .database_name = "Dashboard", .schema = "dbo") %>%
+ collect()
+act
+
+act_1 <- act %>%
+  clean_names()
+
+act_1$reporting_year_identifier <- as.numeric(act_1$reporting_year_identifier)
+act_1
+
+act_1$year_of_high_school_graduation <- as.numeric(act_1$year_of_high_school_graduation)
+act_1
+
+act_1$expanded_test_date <- as.numeric(act_1$expanded_test_date)
+act_1
+
+act_1$science_scale_score <- as.numeric(act_1$science_scale_score)
+act_1
+
+act_1$local_id_number <- as.numeric(act_1$local_id_number)
+act_1
+
+
+act_2 <- act_1 %>%
+  filter(best_composite == TRUE) %>%
+  mutate(date_tested = as.Date(paste(substr(test_date, 1,2),"-01-20",substr(test_date, 3,4), sep = ""), "%m-%d-%Y")) %>%
+  select(reporting_year_identifier, 
+         year_of_high_school_graduation, 
+         date_tested, 
+         science_scale_score, 
+         student_id = student_number_delta)
+act_2
+
+act_22 <- act_2 %>%
+  filter(date_tested == "2020-10-01")
+act_22
+  
+#Join ACT_2 to Survey data for 20-21
+
+act_survey_all_years <- inner_join(act_2, survey_20_21 , by=NULL)
+act_survey_all_years
+
+act_survey_all_years <- act_survey_20_21 %>%
+  mutate(grade_level = which_grade_are_you_currently_in)
+act_survey_all_years
+
+#I don't know how to change the "date" format to numeric, so I'm saving th df as a .csv, and I'll manually remove all years except for 2020 for "date_tested".
+
+write.csv(act_survey_all_years,"C:\\Users\\maura.carter\\Documents\\20-21_Camp_RIO_Year2\\data\\2021-07-24_act_survey_all_years.csv", row.names = FALSE)
+
+#------------------------------------------------
+#Messing around trying to remove "date" format for "date_tested" column.
+act_survey_all_years2 <- act_survey_all_years
+
+act_survey_all_years2$date_tested<-as.numeric[act_survey_all_years2$date_tested == "2020-10-01"] <- 2020
+act_survey_all_years2
+
+act_survey_all_years3 <- act_survey_all_years2 %>%
+  mutate(date_tested_new = date_tested)
+act_survey_all_years3
+
+act_survey_all_years3$date_tested_new[act_survey_all_years3$date_tested_new != 2020-10-01] <- "0"
+act_survey_all_years3
+  
+
+
+```
+
+ACT sci. ave score
+
+11th Grade
+```{r}
+#view the dataset, it should have only Oct. 2020 for Date Tested.
+X2021_07_24_act_survey_all_20_21 #91 rows of data, containing both 11th and 12th graders who took the ACT in 2020.
+
+act_survey_20_21 <- X2021_07_24_act_survey_all_20_21
+act_survey_20_21
+
+
+
+#Ave. ACT sci, 11th, (>2) visits to Camp RIO   (20-21)   (bin1)        11th AVE ACT: 19.12
+ACT_11th_20_21_average_bin1 <- act_survey_20_21%>%
+  select(reporting_year_identifier, date_tested, year_of_high_school_graduation, science_scale_score, student_id, num_visits_bin, grade_level)%>%
+  filter(num_visits_bin == 1)%>%
+  filter(grade_level == 11)%>%
+  mutate(science_scale_score_percent = science_scale_score/100)
+ACT_11th_20_21_average_bin1 # now 25 rows of 11th graders #42 rows
+
+
+ACT_11th_omit_na_bin1 <- na.omit(ACT_11th_20_21_average_bin1)
+ACT_11th_omit_na_bin1  # still 25 after omitting NAs  
+
+act_11 <- ACT_11th_omit_na_bin1%>%
+  mutate(science_score_ave = sum(science_scale_score)/25)
+act_11
+
+#--------------------------------
+
+
+#Ave. ACT sci, 11th, (1, 2) visits to Camp RIO   (20-21)   (bin0)        11th AVE ACT: 18.556
+ACT_11th_20_21_average_bin0 <- act_survey_20_21%>%
+  select(reporting_year_identifier, date_tested, year_of_high_school_graduation, science_scale_score, student_id, num_visits_bin, grade_level)%>%
+  filter(num_visits_bin == 0)%>%
+  filter(grade_level == 11)%>%
+  mutate(science_scale_score_percent = science_scale_score/100)
+ACT_11th_20_21_average_bin0 #9 rows
+
+
+ACT_11th_omit_na_bin0 <- na.omit(ACT_11th_20_21_average_bin0)
+ACT_11th_omit_na_bin0  #still 9 rows after omitting the NAs
+
+act_11_0 <- ACT_11th_omit_na_bin0%>%
+  mutate(science_score_ave = sum(science_scale_score)/9)
+act_11_0
+
+#------------------------
+
+#averages: bin0, 0-2 visits
+act_N <- 9 + 13
+act_N
+
+act_0_ave <- (18.556*9 + 22.154*13)/act_N
+act_0_ave
+
+#averages: bin1, >2 visits
+act_N_bin1 <- 25 + 44
+act_N_bin1
+
+act_1_ave <-(19.120*25 + 18.386*44)/act_N_bin1
+act_1_ave
+
+
+
+```
+
+ACT AVE sci Score
+12th GRADE
+```{r}
+#Table of all 12th graders who took ACT in 2020.
+act_survey_20_21_12th <- act_survey_20_21 %>%
+  filter(grade_level == 12)
+act_survey_20_21_12th
+
+
+
+
+#Ave. ACT sci, 12th, (>2) visits to Camp RIO   (20-21)   (bin1)        12th AVE ACT: 18.386
+ACT_12th_20_21_average_bin1 <- act_survey_20_21%>%
+  select(reporting_year_identifier, date_tested, year_of_high_school_graduation, science_scale_score, student_id, num_visits_bin, grade_level)%>%
+  filter(num_visits_bin == 1)%>%
+  filter(grade_level == 12)%>%
+  mutate(science_scale_score_percent = science_scale_score/100)
+ACT_12th_20_21_average_bin1 #44 rows of 12th graders 
+
+
+ACT_12th_omit_na_bin1 <- na.omit(ACT_12th_20_21_average_bin1)
+ACT_12th_omit_na_bin1  # still 44 after omitting NAs  
+
+act_12 <- ACT_12th_omit_na_bin1%>%
+  mutate(science_score_ave = sum(science_scale_score)/44)
+act_12
+
+#--------------------------------
+
+
+#Ave. ACT sci, 11th, (1, 2) visits to Camp RIO   (20-21)   (bin0)        12th AVE ACT: 22.154
+ACT_12th_20_21_average_bin0 <- act_survey_20_21%>%
+  select(reporting_year_identifier, date_tested, year_of_high_school_graduation, science_scale_score, student_id, num_visits_bin, grade_level)%>%
+  filter(num_visits_bin == 0)%>%
+  filter(grade_level == 12)%>%
+  mutate(science_scale_score_percent = science_scale_score/100)
+ACT_12th_20_21_average_bin0 #13 rows
+
+
+ACT_12th_omit_na_bin0 <- na.omit(ACT_12th_20_21_average_bin0)
+ACT_12th_omit_na_bin0  #still 13 rows after omitting the NAs
+
+act_12_0 <- ACT_12th_omit_na_bin0%>%
+  mutate(science_score_ave = sum(science_scale_score)/13)
+act_12_0
+
+
+```
+ACT: Test for Normality
+
+
+11th GRADE both groups (bin1, bin0)
+```{r}
+#Shapiro Wilks null: data is normal. a sig. p value <0.05 means the null is not supported, and the data is not normal.
+
+#bin1             n=25
+act_11
+shapiro.test(act_11$science_scale_score) #p = 0.395 > 0.05 so it's Normal.
+
+#shapiro wilks says it's Normal, but here's the visual inspection (qq plot).                       
+ggqqplot(act_11$science_scale_score, title = "Normal QQ Plot for ACT 11th, (>2) Visits") #looks normal, mostly linear
+
+#density plot to see if it's "Bell" shaped
+library("ggpubr")
+ggdensity(act_11$science_scale_score, 
+          main = "Density plot of ACT Science Score",
+          xlab = "ACT Science Score, 11th, (>2 Visits)")    #Looks fairly bell-shaped.
+
+
+
+#-----------------------------------------------
+
+#bin0           n=9
+act_11_0
+shapiro.test(act_11_0$science_scale_score)  #p=0.06 >0.05 meaning it's "normal", but our n=9 is so low that this is likely wrong.
+
+
+#qq plot to visually inspect for normality
+install.packages("ggpubr")
+library(ggpubr)
+ggqqplot(act_11_0$science_scale_score, title = "Normal QQ Plot for ACT 11th, (0,2) Visits") #plot departs from Normality; two points at the top right indicate lack of homoscedasticity (equal variance of the error terms).
+
+library("ggpubr")
+ggdensity(act_11_0$science_scale_score, 
+          main = "Density plot of ACT Science Score",
+          xlab = "ACT Science Score, 11th, (0-2 Visits)")  #WHOA looks like a roller coaster, NOT a bell shape/not Normal
+
+
+
+```
+Gpa, GRADES, Act
+
+STAAR
+Matric/persistence
+
+ACT: Test for Normality:
+
+12th GRADE both groups (bin1, bin0)
+Reference: http://www.sthda.com/english/wiki/normality-test-in-r
+```{r}
+#Shapiro Wilks null: data is normal. a sig. p value <0.05 means the null is not supported, and the data is not normal.
+
+#bin1             n=44
+act_12
+shapiro.test(act_12$science_scale_score) #p = 0.027 < 0.05 so it's NOT normal.
+
+#shapiro wilks says it's not Normal, but here's the visual inspection (qq plot).
+ggqqplot(act_12$science_scale_score, title = "Normal QQ Plot for ACT 12th, (>2) Visits")
+
+#density plot to see if it's "Bell" shaped
+library("ggpubr")
+ggdensity(act_12$science_scale_score, 
+          main = "Density plot of ACT Science Score",
+          xlab = "ACT Science Score, 12th, (>2 Visits)")    #It doesn't really look bell shaped. NOT normal.
+
+
+
+#-----------------------------------------------
+
+#bin0           n=13
+act_12_0
+shapiro.test(act_12_0$science_scale_score)  #p>0.05 meaning it's "normal", but our n is so low that this is likely wrong.
+
+
+#qq plot to visually inspect for normality
+install.packages("ggpubr")
+library(ggpubr)
+ggqqplot(act_12_0$science_scale_score, title = "Normal QQ Plot for ACT 12th, (0,2) Visits") #plot looks Normal.
+
+library("ggpubr")
+ggdensity(act_12_0$science_scale_score, 
+          main = "Density plot of ACT Science Score",
+          xlab = "ACT Science Score, 12th, (0-2 Visits)") 
+
+#------------------------------------
+#PREP DATA TABLE
+
+#Total bin normality (incl. both 11th and 12th grades, separate by bin/ num_visits_bin)
+#Normality for bin1 total (both 11th and 12th)
+
+#Table of all 11th and 12th graders who took ACT in 2020, bin1 >2 visits.
+act_survey_20_21_both_grades_bin1 <- act_survey_20_21 %>%
+  filter(num_visits_bin == 1)
+act_survey_20_21_both_grades_bin1  #69 rows, incl. all of bin1 11th, 12th graders
+
+
+#Table of all 11th and 12th graders who took ACT in 2020, bin0, 0-2 visits.
+act_survey_20_21_both_grades_bin0 <- act_survey_20_21 %>%
+  filter(num_visits_bin == 0)
+act_survey_20_21_both_grades_bin0  #22 rows, incl. all of bin1 11th, 12th graders
+
+
+#TEST
+#Shapiro Wilks null: data is normal. a sig. p value <0.05 means the null is not supported, and the data is not normal.
+
+#A) bin1 both grades 11th, 12th            n=69       NOT NORMAL
+shapiro.test(act_survey_20_21_both_grades_bin1$science_scale_score) #p = 0.0079 < 0.05 so it's NOT normal.
+
+#shapiro wilks says it's not Normal, but here's the visual inspection (qq plot).
+ggqqplot(act_survey_20_21_both_grades_bin1$science_scale_score, title = "Normal QQ Plot Total Ave. ACT, 11th & 12th, (>2) Visits")
+ #departs from normality esp. in upper right portion of graph
+
+
+#density plot to see if it's "Bell" shaped
+library("ggpubr")
+ggdensity(act_survey_20_21_both_grades_bin1$science_scale_score, 
+          main = "Density plot of ACT Science Score",
+          xlab = "ACT Science Score, both 11th & 12th, (>2 Visits)") #does not look bell shaped; it's bi-modal. NOT normal.
+
+
+
+#B) Normality for bin0 total (both 11th and 12th)            NORMAL
+shapiro.test(act_survey_20_21_both_grades_bin0$science_scale_score) #p = 0.536 < 0.05 so it's normal. However, only 22 rows of data so very low n, so of course it would likely appear normal (even if it's not), so we need to do a visual inspection.
+
+#shapiro wilks says it's not Normal, but here's the visual inspection (qq plot).
+ggqqplot(act_survey_20_21_both_grades_bin0$science_scale_score, title = "Normal QQ Plot Total Ave. ACT, 11th & 12th, (0-2) Visits")
+ #looks fairly normal
+
+
+#density plot to see if it's "Bell" shaped
+library("ggpubr")
+ggdensity(act_survey_20_21_both_grades_bin0$science_scale_score, 
+          main = "Density plot of ACT Science Score",
+          xlab = "ACT Science Score, both 11th & 12th, (0-2 Visits)") #does look fairly bell shaped/normal
+
+
+```
+
+
+Because both groups of data for 11th GRADE ACT, and both groups for 12th GRADE ACT, were not all Normal, we can't use a t-test to compare means. We will use a Whitney-Mann test to see if both groups are statistically sig. different (both groups for 11th grade, and both groups for 12th grade...groups are number of visits above and below 2).
+
+Reference: https://www.statmethods.net/stats/nonparametric.html
+```{r}
+#11th GRADE (bin1), >2 visits                NOT SIG DIFFERENT: 11th grade ACT
+#act_11
+
+b1<-act_11$science_scale_score
+b1
+
+#11th GRADE (bin0), 0-2 visits
+#act_11_0
+
+b2 <- act_11_0$science_scale_score
+b2
+
+#Whitney Mann U Test (non-parametric test since the 2 groups of data were not both normal)
+
+wilcox.test(b1,b2)  #conclusion: Medians do NOT differ (they are not sig. different ACT sci. scores)
+
+wilcox.test(b1, b2, alternative = "greater")
+wilcox.test(b1, b2, alternative = "less")
+
+#-------------------------------
+#12th GRADE (bin1), >2 visits                 YES, SIG. different: 12th ACT (for 2-tailed, and 1-tailed "less")
+#act_12
+
+b12<-act_12$science_scale_score
+b12
+
+#12th GRADE (bin0), 0-2 visits
+#act_12_0
+
+b22 <- act_12_0$science_scale_score
+b22
+
+#Whitney Mann U Test (non-parametric test since the 2 groups of data were not both normal)
+
+wilcox.test(b12,b22) #WAS sig. (2-sided)
+
+wilcox.test(b12, b22, alternative = "greater") #was NOT sig. (1-sided)
+wilcox.test(b12, b22, alternative = "less") #WAS sig. (for checking lowset test scores, which were sig. different for the two groups)   (1-sided)
+
+#---------------------------------
+#TOTAL bin1 (both 11th, 12th grades), >2 visits                 YES, SIG. different: 12th ACT (for 2-tailed, and 1-tailed "less")
+#act_survey_20_21_both_grades_bin1   (df used)
+
+b_both_bin1<-act_survey_20_21_both_grades_bin1$science_scale_score
+b_both_bin1
+
+#TOTAL bin0 (both 11th, 12th grades), 0-2 visits
+#act_survey_20_21_both_grades_bin0   (df used)
+
+b_both_bin0 <- act_survey_20_21_both_grades_bin0$science_scale_score
+b_both_bin0
+
+#Whitney Mann U Test (non-parametric test since the 2 groups of data were not both normal) *sig. p-value means they are different.
+
+wilcox.test(b_both_bin0, b_both_bin1) #not sig. (2-sided), not different
+
+wilcox.test(b_both_bin0, b_both_bin1, alternative = "greater") #was NOT sig. (1-sided), not different
+wilcox.test(b_both_bin0, b_both_bin1, alternative = "less") #not sig., not differetn on lowest test scores,  (1-sided)
+
+
+
+#---------------------------
+#boxplot
+
+#table for 11th bin1, bin0 in same df
+#Table of all 11th graders who took ACT in 2020.
+
+act_survey_20_21_11th <- act_survey_20_21 %>%
+  filter(grade_level == 11)
+act_survey_20_21_11th
+
+
+
+#table for 12th bin1, bin0, in same df
+#Table of all 12th graders who took ACT in 2020.
+act_survey_20_21_12th <- act_survey_20_21 %>%
+  filter(grade_level == 12)
+act_survey_20_21_12th
+#---------------------------------------
+
+#11th GRADE ACT: boxplots below:
+box_11 <- boxplot(science_scale_score~ num_visits_bin, data = act_survey_20_21_11th)
+box_11
+
+#12th GRADE ACT: boxplots below:
+box_12 <- boxplot(science_scale_score~ num_visits_bin, data = act_survey_20_21_12th)
+box_12
+
+
+
+
+```
+
+
+
+

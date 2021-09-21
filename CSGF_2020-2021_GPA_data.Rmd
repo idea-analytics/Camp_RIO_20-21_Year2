@@ -1,0 +1,400 @@
+---
+title: "CSGF_GPA_unweighted"
+author: Maura Carter
+date: 08/17/2021
+output: html_notebook
+---
+
+CSGF Data collection for College Success Team
+
+
+GPA_unweighted for all 12th grade students, 20-21 AcademicYear
+
+```{r}
+#gpa table has AcademicYear: 2019-2020, and 2020-2021, need to filter for 2020-2021
+
+#Select: StudentNumber, AcademicYear, GradeLevelID, CumulativeGPA (many rows are "0.00"), CumulativeWeightedGPA (most rows are filled in)
+gpa_csgf <- gpa %>%
+  clean_names()
+gpa_csgf
+
+#gpa_2020_2021 #14334 rows
+
+gpa_csgf1 <- gpa_csgf %>%
+  filter(academic_year == "2020-2021")%>%
+  mutate(student_id = student_number)%>%
+  select(student_id, academic_year, grade_level_id, cumulative_gpa, cumulative_weighted_gpa)
+gpa_csgf1 #14331 rows
+#--------------------------
+
+#filter for gradelevelid = 12
+
+gpa_csgf2 <- gpa_csgf1 %>%
+  filter(grade_level_id== 12)
+gpa_csgf2 #1473 rows (number of 12th graders with GPAs in 2020-2021 AcademicYear)
+
+
+#select to keep only the variables we need
+
+gpa_csgf3 <- gpa_csgf2 %>%
+  select(student_id, cumulative_gpa)
+gpa_csgf3
+
+
+#write to csv, then copy and past those two columns into the spreadsheet for CSGF wrike request.
+write.csv(gpa_csgf3, "C:\\Users\\maura.carter\\Documents\\Hiring\\data\\gpa_csgf3.csv", row.names = FALSE)
+
+write.csv(gpa_csgf3, "C:\\Users\\maura.carter\\Downloads\\gpa_csgf30.csv", row.names = FALSE)
+
+```
+
+// END gpa
+
+
+
+
+
+___________________________________________________________________________
+
+
+ACT (highest score per student) scores by subject ("section"), including composite too, for all 11th, 12th students who took ACT in 2020-2021.
+
+```{r}
+
+
+act
+
+
+
+```
+
+ACT
+
+
+ACT data
+```{r}
+
+act <- get_table(.table_name = "ACT", .database_name = "Dashboard", .schema = "dbo") %>%
+ collect()
+act
+
+act_1 <- act %>%
+  clean_names()
+
+act_1$reporting_year_identifier <- as.numeric(act_1$reporting_year_identifier)
+act_1
+
+act_1$year_of_high_school_graduation <- as.numeric(act_1$year_of_high_school_graduation)
+act_1
+
+act_1$expanded_test_date <- as.numeric(act_1$expanded_test_date)
+act_1
+
+act_1$science_scale_score <- as.numeric(act_1$science_scale_score)
+act_1
+
+act_1$local_id_number <- as.numeric(act_1$local_id_number)
+act_1
+
+
+act_2 <- act_1 %>%
+  filter(best_composite == TRUE) %>%
+  mutate(date_tested = as.Date(paste(substr(test_date, 1,2),"-01-20",substr(test_date, 3,4), sep = ""), "%m-%d-%Y")) %>%
+  select(reporting_year_identifier, 
+         year_of_high_school_graduation, 
+         date_tested, 
+         english_scale_score,
+         mathematics_scale_score,
+         reading_scale_score,
+         composite_scale_score,
+         science_scale_score, 
+         student_id = student_number_delta)
+act_2
+
+#add a col for just the test year (since the actual month and day may vary for the testing dates)
+act_year <- act_2 %>%
+  mutate(test_year = substr(date_tested, 1,4), sep = "")
+act_year
+
+
+
+```
+
+Need 11th and 12th graders so that is "year_of_high_school_graduation" = 2021, 2022 (during AcademicYear 2020-2021, which is filtered for through the "date_tested" col.)
+
+```{r}
+act_year_2021 <- act_year%>%
+  filter(test_year == 2021)
+act_year_2021 #90 students, all of them are in 11th grade
+
+#filter for the cols I need, then write to CSV
+
+act_year_2021_final <- act_year_2021 %>%
+  select(student_id, english_scale_score, mathematics_scale_score, reading_scale_score, science_scale_score, composite_scale_score)
+act_year_2021_final
+
+#write to csv, then copy and past those two columns into the spreadsheet for CSGF wrike request.
+write.csv(act_year_2021_final, "C:\\Users\\maura.carter\\Documents\\Hiring\\data\\act_year_2021_final.csv", row.names = FALSE)
+
+
+```
+Create a table for each subject, with a column that contains the subject name. (5 tables, 1 per subject)
+
+```{r}
+#Mathemtics
+act_year_2021_math <- act_year_2021_final %>%
+  select(student_id, mathematics_scale_score) %>%
+  mutate(subject = "mathematics")
+act_year_2021_math
+
+
+#Science
+act_year_2021_science <- act_year_2021_final %>%
+  select(student_id, science_scale_score) %>%
+  mutate(subject = "Science")
+act_year_2021_science
+
+#Reading
+act_year_2021_reading <- act_year_2021_final %>%
+  select(student_id, reading_scale_score) %>%
+  mutate(subject = "Reading")
+act_year_2021_reading
+
+
+#English
+act_year_2021_english <- act_year_2021_final %>%
+  select(student_id, english_scale_score) %>%
+  mutate(subject = "English")
+act_year_2021_english
+
+
+#Composite Score
+act_year_2021_composite <- act_year_2021_final %>%
+  select(student_id, composite_scale_score) %>%
+  mutate(subject = "Composite")
+act_year_2021_composite
+
+
+#--------------------
+
+#join the tables
+act_year_2021_final
+composite_science <- left_join(act_year_2021_composite, act_year_2021_science, by="student_id")
+composite_science
+
+mathematics_reading <- left_join(act_year_2021_math, act_year_2021_reading, by="student_id")
+mathematics_reading
+
+mathematics_reading_english <- left_join(mathematics_reading, act_year_2021_english, by="student_id")
+mathematics_reading_english
+
+#all 5 subjects joined
+act_subjects_all_5 <- left_join(mathematics_reading_english,composite_science, by="student_id")
+act_subjects_all_5
+
+#-------------------------
+# write to csv
+
+#write to csv, then copy and past those two columns into the spreadsheet for CSGF wrike request.
+write.csv(act_subjects_all_5, "C:\\Users\\maura.carter\\Documents\\Hiring\\data\\act_subjects_all_5.csv", row.names = FALSE)
+
+
+```
+
+
+
+
+
+
+don't need all this stuff below
+
+```{r}
+  
+#Join ACT_2 to Survey data for 20-21
+
+act_survey_all_years <- inner_join(act_2, survey_20_21 , by=NULL)
+act_survey_all_years
+
+act_survey_all_years <- act_survey_20_21 %>%
+  mutate(grade_level = which_grade_are_you_currently_in)
+act_survey_all_years
+
+#I don't know how to change the "date" format to numeric, so I'm saving th df as a .csv, and I'll manually remove all years except for 2020 for "date_tested".
+
+write.csv(act_survey_all_years,"C:\\Users\\maura.carter\\Documents\\20-21_Camp_RIO_Year2\\data\\2021-07-24_act_survey_all_years.csv", row.names = FALSE)
+
+#------------------------------------------------
+#Messing around trying to remove "date" format for "date_tested" column.
+act_survey_all_years2 <- act_survey_all_years
+
+act_survey_all_years2$date_tested<-as.numeric[act_survey_all_years2$date_tested == "2020-10-01"] <- 2020
+act_survey_all_years2
+
+act_survey_all_years3 <- act_survey_all_years2 %>%
+  mutate(date_tested_new = date_tested)
+act_survey_all_years3
+
+act_survey_all_years3$date_tested_new[act_survey_all_years3$date_tested_new != 2020-10-01] <- "0"
+act_survey_all_years3
+  
+
+
+```
+
+ACT sci. ave score
+
+11th Grade
+```{r}
+#view the dataset, it should have only Oct. 2020 for Date Tested.
+X2021_07_24_act_survey_all_20_21 #91 rows of data, containing both 11th and 12th graders who took the ACT in 2020.
+
+act_survey_20_21 <- X2021_07_24_act_survey_all_20_21
+act_survey_20_21
+
+
+
+#Ave. ACT sci, 11th, (>2) visits to Camp RIO   (20-21)   (bin1)        11th AVE ACT: 19.12
+ACT_11th_20_21_average_bin1 <- act_survey_20_21%>%
+  select(reporting_year_identifier, date_tested, year_of_high_school_graduation, science_scale_score, student_id, num_visits_bin, grade_level)%>%
+  filter(num_visits_bin == 1)%>%
+  filter(grade_level == 11)%>%
+  mutate(science_scale_score_percent = science_scale_score/100)
+ACT_11th_20_21_average_bin1 # now 25 rows of 11th graders #42 rows
+
+
+ACT_11th_omit_na_bin1 <- na.omit(ACT_11th_20_21_average_bin1)
+ACT_11th_omit_na_bin1  # still 25 after omitting NAs  
+
+act_11 <- ACT_11th_omit_na_bin1%>%
+  mutate(science_score_ave = sum(science_scale_score)/25)
+act_11
+
+#--------------------------------
+
+
+#Ave. ACT sci, 11th, (1, 2) visits to Camp RIO   (20-21)   (bin0)        11th AVE ACT: 18.556
+ACT_11th_20_21_average_bin0 <- act_survey_20_21%>%
+  select(reporting_year_identifier, date_tested, year_of_high_school_graduation, science_scale_score, student_id, num_visits_bin, grade_level)%>%
+  filter(num_visits_bin == 0)%>%
+  filter(grade_level == 11)%>%
+  mutate(science_scale_score_percent = science_scale_score/100)
+ACT_11th_20_21_average_bin0 #9 rows
+
+
+ACT_11th_omit_na_bin0 <- na.omit(ACT_11th_20_21_average_bin0)
+ACT_11th_omit_na_bin0  #still 9 rows after omitting the NAs
+
+act_11_0 <- ACT_11th_omit_na_bin0%>%
+  mutate(science_score_ave = sum(science_scale_score)/9)
+act_11_0
+
+#------------------------
+
+#averages: bin0, 0-2 visits
+act_N <- 9 + 13
+act_N
+
+act_0_ave <- (18.556*9 + 22.154*13)/act_N
+act_0_ave
+
+#averages: bin1, >2 visits
+act_N_bin1 <- 25 + 44
+act_N_bin1
+
+act_1_ave <-(19.120*25 + 18.386*44)/act_N_bin1
+act_1_ave
+
+
+
+```
+
+ACT AVE sci Score
+12th GRADE
+```{r}
+#Table of all 12th graders who took ACT in 2020.
+act_survey_20_21_12th <- act_survey_20_21 %>%
+  filter(grade_level == 12)
+act_survey_20_21_12th
+
+
+
+
+#Ave. ACT sci, 12th, (>2) visits to Camp RIO   (20-21)   (bin1)        12th AVE ACT: 18.386
+ACT_12th_20_21_average_bin1 <- act_survey_20_21%>%
+  select(reporting_year_identifier, date_tested, year_of_high_school_graduation, science_scale_score, student_id, num_visits_bin, grade_level)%>%
+  filter(num_visits_bin == 1)%>%
+  filter(grade_level == 12)%>%
+  mutate(science_scale_score_percent = science_scale_score/100)
+ACT_12th_20_21_average_bin1 #44 rows of 12th graders 
+
+
+ACT_12th_omit_na_bin1 <- na.omit(ACT_12th_20_21_average_bin1)
+ACT_12th_omit_na_bin1  # still 44 after omitting NAs  
+
+act_12 <- ACT_12th_omit_na_bin1%>%
+  mutate(science_score_ave = sum(science_scale_score)/44)
+act_12
+
+#--------------------------------
+
+
+#Ave. ACT sci, 11th, (1, 2) visits to Camp RIO   (20-21)   (bin0)        12th AVE ACT: 22.154
+ACT_12th_20_21_average_bin0 <- act_survey_20_21%>%
+  select(reporting_year_identifier, date_tested, year_of_high_school_graduation, science_scale_score, student_id, num_visits_bin, grade_level)%>%
+  filter(num_visits_bin == 0)%>%
+  filter(grade_level == 12)%>%
+  mutate(science_scale_score_percent = science_scale_score/100)
+ACT_12th_20_21_average_bin0 #13 rows
+
+
+ACT_12th_omit_na_bin0 <- na.omit(ACT_12th_20_21_average_bin0)
+ACT_12th_omit_na_bin0  #still 13 rows after omitting the NAs
+
+act_12_0 <- ACT_12th_omit_na_bin0%>%
+  mutate(science_score_ave = sum(science_scale_score)/13)
+act_12_0
+
+
+```
+ACT: Test for Normality
+
+
+11th GRADE both groups (bin1, bin0)
+```{r}
+#Shapiro Wilks null: data is normal. a sig. p value <0.05 means the null is not supported, and the data is not normal.
+
+#bin1             n=25
+act_11
+shapiro.test(act_11$science_scale_score) #p = 0.395 > 0.05 so it's Normal.
+
+#shapiro wilks says it's Normal, but here's the visual inspection (qq plot).                       
+ggqqplot(act_11$science_scale_score, title = "Normal QQ Plot for ACT 11th, (>2) Visits") #looks normal, mostly linear
+
+#density plot to see if it's "Bell" shaped
+library("ggpubr")
+ggdensity(act_11$science_scale_score, 
+          main = "Density plot of ACT Science Score",
+          xlab = "ACT Science Score, 11th, (>2 Visits)")    #Looks fairly bell-shaped.
+
+
+
+#-----------------------------------------------
+
+#bin0           n=9
+act_11_0
+shapiro.test(act_11_0$science_scale_score)  #p=0.06 >0.05 meaning it's "normal", but our n=9 is so low that this is likely wrong.
+
+
+#qq plot to visually inspect for normality
+install.packages("ggpubr")
+library(ggpubr)
+ggqqplot(act_11_0$science_scale_score, title = "Normal QQ Plot for ACT 11th, (0,2) Visits") #plot departs from Normality; two points at the top right indicate lack of homoscedasticity (equal variance of the error terms).
+
+library("ggpubr")
+ggdensity(act_11_0$science_scale_score, 
+          main = "Density plot of ACT Science Score",
+          xlab = "ACT Science Score, 11th, (0-2 Visits)")  #WHOA looks like a roller coaster, NOT a bell shape/not Normal
+
+
+
+```

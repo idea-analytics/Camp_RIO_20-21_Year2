@@ -1,0 +1,528 @@
+---
+title: "Analyze Science Grades 20-21"
+author: Maura Carter
+date: 07_20_21
+output: html_notebook
+---
+
+
+
+```{r}
+library(dplyr)
+science_grades <- get_table(.table_name = "StudentHistoricalGrades", .database_name = "PROD1", .schema = "Schools")%>%
+    filter(CreditType == "SC", AcademicYear == '2019-2020' | AcademicYear == '2020-2021') %>%
+    collect()
+head(science_grades)
+
+```
+
+Student Survey CP (20-21)
+```{r}
+survey_20_21_CP <- read_excel("C:/Users/maura.carter/ideapublicschools.org/Evaluation of Camp Rio - Documents/Camp RIO Survey - Video - College Prep.xlsx") %>%
+  mutate(StudentID = as.numeric(`Please enter your student number.`))
+
+survey_20_21_CP
+
+#Clean the variable names (too many spaces/long!)
+library(janitor)
+survey2_20_21_CP <- survey_20_21_CP %>%
+  clean_names()
+head(survey2_20_21_CP)
+
+survey3_20_21_CP <- survey2_20_21_CP%>%
+  mutate(num_visits = before_today_how_many_times_have_you_visited_camp_rio, na.rm = TRUE)
+survey3_20_21_CP
+
+survey3_20_21_CP$num_visits <-as.numeric(survey3_20_21_CP$num_visits)
+survey3_20_21_CP
+
+#All a col called "num_visits_bin" to change number of visits to Binary (3+ = 1, 1 or 2 = 0;  OR:  >2 = 1, <3 = 0)
+survey4_20_21_CP <- survey3_20_21_CP %>%
+  mutate(num_visits_bin = num_visits, na.rm = TRUE)
+survey4_20_21_CP
+
+# "num_visits_bin" col: Make everything less than 2 (0, 1 prior visits) a "0". It really means that if they had 0 visits, it's 1 visit when you include today. If they had 1 prior visit, it's 2 including today, etc.
+survey4_20_21_CP$num_visits_bin[survey4_20_21_CP$num_visits_bin < 2] <- 0
+survey4_20_21_CP
+
+# "num_visits_bin" col: Make everything larger than 0 (all visits that are 2, 3, 4+ for prior visits) to a "1". It will actually start at "3" because if you include today's visit, you do 2 + 1 = 3.
+survey4_20_21_CP$num_visits_bin[survey4_20_21_CP$num_visits_bin > 0] <- 1
+survey4_20_21_CP
+
+survey5_20_21_CP <- survey4_20_21_CP %>%
+  select(student_id, num_visits_bin)
+survey5_20_21_CP
+
+```
+
+Student Survey Academy (20-21)
+```{r}
+
+survey_20_21_AC <- read_excel("C:/Users/maura.carter/ideapublicschools.org/Evaluation of Camp Rio - Documents/Camp RIO Survey - Video - Academy.xlsx")  %>% 
+  mutate(StudentID = as.numeric(`Please enter your student number.`))
+
+survey_20_21_AC
+
+#Clean the variable names (too many spaces/long!)
+library(janitor)
+survey2_20_21_AC <- survey_20_21_AC %>%
+  clean_names()
+head(survey2_20_21_AC)
+
+survey3_20_21_AC <- survey2_20_21_AC %>%
+  mutate(num_visits = before_today_how_many_times_have_you_visited_camp_rio, na.rm = TRUE)
+survey3_20_21_AC
+
+survey3_20_21_AC$num_visits <-as.numeric(survey3_20_21_AC$num_visits)
+survey3_20_21_AC
+
+#All a col called "num_visits_bin" to change number of visits to Binary (3+ = 1, 1 or 2 = 0;  OR:  >2 = 1, <3 = 0)
+survey4_20_21_AC <- survey3_20_21_AC %>%
+  mutate(num_visits_bin = num_visits, na.rm = TRUE)
+survey4_20_21_AC
+
+# "num_visits_bin" col: Make everything less than 2 (0, 1 prior visits) a "0". It really means that if they had 0 visits, it's 1 visit when you include today. If they had 1 prior visit, it's 2 including today, etc.
+survey4_20_21_AC$num_visits_bin[survey4_20_21_AC$num_visits_bin < 2] <- 0
+survey4_20_21_AC
+
+# "num_visits_bin" col: Make everything larger than 0 (all visits that are 2, 3, 4+ for prior visits) to a "1". It will actually start at "3" because if you include today's visit, you do 2 + 1 = 3.
+survey4_20_21_AC$num_visits_bin[survey4_20_21_AC$num_visits_bin > 0] <- 1
+survey4_20_21_AC
+
+survey5_20_21_AC <- survey4_20_21_AC %>%
+  select(student_id, num_visits_bin)
+survey5_20_21_AC
+
+
+
+
+
+```
+
+Student Survey: College Prep 19-20
+```{r}
+survey_19_20_CP <- read_excel("C:/Users/maura.carter/ideapublicschools.org/Evaluation of Camp Rio - Documents/Camp RIO Survey - College Prep.xlsx")%>%
+  mutate(StudentID = as.numeric(`Please enter your student number.`))
+
+survey_19_20_CP
+
+#Clean the variable names (too many spaces/long!)
+library(janitor)
+survey2_19_20_CP <- survey_19_20_CP %>%
+  clean_names()
+head(survey2_19_20_CP)
+
+survey3_19_20_CP <- survey2_19_20_CP%>%
+  mutate(num_visits = before_today_how_many_times_have_you_visited_camp_rio, na.rm = TRUE)
+survey3_19_20_CP
+
+survey3_19_20_CP$num_visits <-as.numeric(survey3_19_20_CP$num_visits)
+survey3_19_20_CP
+
+#All a col called "num_visits_bin" to change number of visits to Binary (3+ = 1, 1 or 2 = 0;  OR:  >2 = 1, <3 = 0)
+survey4_19_20_CP <- survey3_19_20_CP %>%
+  mutate(num_visits_bin = num_visits, na.rm = TRUE)
+survey4_19_20_CP
+
+# "num_visits_bin" col: Make everything less than 2 (0, 1 prior visits) a "0". It really means that if they had 0 visits, it's 1 visit when you include today. If they had 1 prior visit, it's 2 including today, etc.
+survey4_19_20_CP$num_visits_bin[survey4_19_20_CP$num_visits_bin < 2] <- 0
+survey4_19_20_CP
+
+# "num_visits_bin" col: Make everything larger than 0 (all visits that are 2, 3, 4+ for prior visits) to a "1". It will actually start at "3" because if you include today's visit, you do 2 + 1 = 3.
+survey4_19_20_CP$num_visits_bin[survey4_19_20_CP$num_visits_bin > 0] <- 1
+survey4_19_20_CP
+
+survey5_19_20_CP <- survey4_19_20_CP %>%
+  select(student_id, num_visits_bin)
+survey5_19_20_CP
+
+
+
+```
+
+Student Survey: Academy 19-20
+```{r}
+survey_19_20_AC <- read_excel("C:/Users/maura.carter/ideapublicschools.org/Evaluation of Camp Rio - Documents/Camp RIO Survey - Academy.xlsx")%>%
+  mutate(StudentID = as.numeric(`Please enter your student number.`))
+
+survey_19_20_AC
+
+#Clean the variable names (too many spaces/long!)
+library(janitor)
+survey2_19_20_AC <- survey_19_20_AC %>%
+  clean_names()
+head(survey2_19_20_AC)
+
+survey3_19_20_AC <- survey2_19_20_AC%>%
+  mutate(num_visits = before_today_how_many_times_have_you_visited_camp_rio, na.rm = TRUE)
+survey3_19_20_AC
+
+survey3_19_20_AC$num_visits <-as.numeric(survey3_19_20_AC$num_visits)
+survey3_19_20_AC
+
+#All a col called "num_visits_bin" to change number of visits to Binary (3+ = 1, 1 or 2 = 0;  OR:  >2 = 1, <3 = 0)
+survey4_19_20_AC <- survey3_19_20_AC %>%
+  mutate(num_visits_bin = num_visits, na.rm = TRUE)
+survey4_19_20_AC
+
+# "num_visits_bin" col: Make everything less than 2 (0, 1 prior visits) a "0". It really means that if they had 0 visits, it's 1 visit when you include today. If they had 1 prior visit, it's 2 including today, etc.
+survey4_19_20_AC$num_visits_bin[survey4_19_20_AC$num_visits_bin < 2] <- 0
+survey4_19_20_AC
+
+# "num_visits_bin" col: Make everything larger than 0 (all visits that are 2, 3, 4+ for prior visits) to a "1". It will actually start at "3" because if you include today's visit, you do 2 + 1 = 3.
+survey4_19_20_AC$num_visits_bin[survey4_19_20_AC$num_visits_bin > 0] <- 1
+survey4_19_20_AC
+
+survey5_19_20_AC <- survey4_19_20_AC %>%
+  select(student_id, num_visits_bin)
+survey5_19_20_AC
+
+```
+
+
+
+Join survey5_20_21_CP (college prep) to survey5_20_21_AC (academy)
+```{r}
+survey_20_21 <- bind_rows(survey5_20_21_AC, survey5_20_21_CP, .id=NULL)
+survey_20_21
+
+survey2_20_21 <- bind_rows(survey5_19_20_AC, survey5_19_20_CP, .id=NULL)
+survey2_20_21
+
+#Bind 19-20 to 20-21 (student surveys)
+survey3_19_20_21 <- bind_rows(survey_20_21, survey2_20_21, .id=NULL)
+survey3_19_20_21
+
+```
+
+
+GPA data
+```{r}
+gpa <- get_table(.table_name = "StudentAcademicSummary", .database_name = "PROD1", .schema = "Schools") %>%
+  filter(AcademicYear == '2020-2021' | AcademicYear == '2019-2020' ) %>%
+  collect()
+head(gpa)
+
+gpa_20_21 <- gpa %>%
+  select(PowerSchoolStudentID, AcademicYear, StudentNumber, GradeLevelID,CumulativeWeightedGPA, State)%>%
+  filter(AcademicYear == "2020-2021")
+gpa_20_21
+
+gpa2_20_21 <- gpa_20_21 %>%
+  mutate(student_id = StudentNumber)
+gpa2_20_21
+
+gpa_20_21_search <- gpa_20_21%>%
+  filter(StudentNumber== "108028113")
+gpa_20_21_search
+
+gpa_0 <- gpa %>%
+  mutate(student_id = StudentNumber)%>%
+  select(PowerSchoolStudentID, AcademicYear, student_id, GradeLevelID,CumulativeWeightedGPA, State)
+gpa_0
+
+gpa_00 <- gpa_0 %>%
+  select(student_id)
+gpa_00
+
+
+```
+
+Join GPA data to Student Survey data table (20-21).
+```{r}
+#test. Use "inner_join". left_join doesn't work.
+both <- left_join(gpa_00, survey3_19_20_21, by = NULL)
+both
+
+both2 <- inner_join(gpa_00, survey3_19_20_21, by = NULL)
+both2
+
+#both Academic Years 19-20, 20-21
+gpa_survey_19_20_21 <- inner_join(survey3_19_20_21, gpa_0, by=NULL)
+gpa_survey_19_20_21  #It worked!
+
+
+
+```
+
+
+
+9th Grade (GPA)
+(20-21):     >2 visits:    4.019         *4.019-3.895 = 0.124  (20-21 is larger)
+            (1,2) visits:  3.903         *3.903-3.718 = 0.185  (20-21 is larger)
+            
+(19-20):     >2 visits:    3.895
+            (1,2) visits:  3.718
+
+```{r}
+#20-21
+gpa9_survey_19_20_21 <- gpa_survey_19_20_21 %>%
+  filter(GradeLevelID == "9")%>%
+  filter(AcademicYear == "2020-2021")
+gpa9_survey_19_20_21
+
+gpa9_survey_19_20_21$num_visits_bin <-as.character(gpa9_survey_19_20_21$num_visits_bin)
+gpa9_survey_19_20_21
+
+#Regression
+gpa_9 <- lm(CumulativeWeightedGPA ~ num_visits_bin, data=gpa9_survey_19_20_21)
+summary(gpa_9)
+
+#Average GPA, 9th, (>2) visits to Camp RIO   (20-21)           GPA: 4.019
+gpa9_survey_19_20_21_average_bin1 <- gpa9_survey_19_20_21%>%
+  filter(num_visits_bin == 1)%>%
+  mutate(gpa_average = sum(CumulativeWeightedGPA)/115)
+gpa9_survey_19_20_21_average_bin1
+
+#Average GPA, 9th, (1,2) visits to Camp RIO    (20-21)          GPA: 3.903
+gpa9_survey_19_20_21_average_bin0 <- gpa9_survey_19_20_21%>%
+  filter(num_visits_bin == 0)%>%
+  mutate(gpa_average = sum(CumulativeWeightedGPA)/29)
+gpa9_survey_19_20_21_average_bin0
+#------------------------------------
+#19-20
+gpa9_survey_19<- gpa_survey_19_20_21 %>%
+  filter(GradeLevelID == "9")%>%
+  filter(AcademicYear == "2019-2020")
+gpa9_survey_19
+
+gpa9_survey_19$num_visits_bin <-as.character(gpa9_survey_19$num_visits_bin)
+gpa9_survey_19
+
+#Regression
+gpa_9_19 <- lm(CumulativeWeightedGPA ~ num_visits_bin, data=gpa9_survey_19)
+summary(gpa_9_19)
+
+#Average GPA, 9th, (>2) visits to Camp RIO  (19-20)            GPA: 3.895
+gpa9_survey_19_average_bin1 <- gpa9_survey_19%>%
+  filter(num_visits_bin == 1)%>%
+  mutate(gpa_average = sum(CumulativeWeightedGPA)/183)
+gpa9_survey_19_average_bin1
+
+#Average GPA, 9th, (1,2) visits to Camp RIO  (19-20)             GPA: 3.718
+gpa9_survey_19_average_bin0 <- gpa9_survey_19%>%
+  filter(num_visits_bin == 0)%>%
+  mutate(gpa_average = sum(CumulativeWeightedGPA)/17)
+gpa9_survey_19_average_bin0
+
+```
+
+10th Grade (GPA)
+(20-21):     >2 visits:    3.930         *3.930-3.934 = -0.004  (19-20 is larger)
+            (1,2) visits:  3.756         *3.756-2.558 =  1.198  (20-21 is larger)
+            
+(19-20):     >2 visits:    3.934
+            (1,2) visits:  2.558
+
+```{r}
+#20-21
+gpa10_survey_19_20_21 <- gpa_survey_19_20_21 %>%
+  filter(GradeLevelID == "10")%>%
+  filter(AcademicYear == "2020-2021")
+gpa10_survey_19_20_21
+
+gpa10_survey_19_20_21$num_visits_bin <-as.character(gpa10_survey_19_20_21$num_visits_bin)
+gpa10_survey_19_20_21
+
+#Regression
+gpa_10 <- lm(CumulativeWeightedGPA ~ num_visits_bin, data=gpa10_survey_19_20_21)
+summary(gpa_10)
+
+#Average GPA, 10th, (>2) visits to Camp RIO   (20-21)           GPA: 3.930
+gpa10_survey_19_20_21_average_bin1 <- gpa10_survey_19_20_21%>%
+  filter(num_visits_bin == 1)%>%
+  mutate(gpa_average = sum(CumulativeWeightedGPA)/183)
+gpa10_survey_19_20_21_average_bin1
+
+#Average GPA, 10th, (1,2) visits to Camp RIO    (20-21)          GPA: 3.756
+gpa10_survey_19_20_21_average_bin0 <- gpa10_survey_19_20_21%>%
+  filter(num_visits_bin == 0)%>%
+  mutate(gpa_average = sum(CumulativeWeightedGPA)/20)
+gpa10_survey_19_20_21_average_bin0
+#------------------------------------
+#19-20
+gpa10_survey_19<- gpa_survey_19_20_21 %>%
+  filter(GradeLevelID == "10")%>%
+  filter(AcademicYear == "2019-2020")
+gpa10_survey_19
+
+gpa10_survey_19$num_visits_bin <-as.character(gpa10_survey_19$num_visits_bin)
+gpa10_survey_19
+
+#Regression
+#gpa_10_19 <- lm(CumulativeWeightedGPA ~ num_visits_bin, data=gpa10_survey_19)
+#summary(gpa_10_19)
+
+#Average GPA, 10th, (>2) visits to Camp RIO  (19-20)            GPA: 3.934
+gpa10_survey_19_average_bin1 <- gpa10_survey_19%>%
+  filter(num_visits_bin == 1)%>%
+  mutate(gpa_average = sum(CumulativeWeightedGPA)/74)
+gpa10_survey_19_average_bin1
+
+#Average GPA, 10th, (1,2) visits to Camp RIO  (19-20)             GPA: 2.558
+gpa10_survey_19_average_bin0 <- gpa10_survey_19%>%
+  filter(num_visits_bin == 0)%>%
+  mutate(gpa_average = sum(CumulativeWeightedGPA)/17)
+gpa10_survey_19_average_bin0
+
+
+
+
+```
+
+11th Grade (GPA)
+(20-21):     >2 visits:    3.973         *3.973-3.943 = 0.030   (20-21 is larger)
+            (1,2) visits:  4.085         *4.085-3.923 = 0.162   (20-21 is larger)
+            
+(19-20):     >2 visits:    3.943
+            (1,2) visits:  3.923
+```{r}
+#20-21
+gpa11_survey_19_20_21 <- gpa_survey_19_20_21 %>%
+  filter(GradeLevelID == "11")%>%
+  filter(AcademicYear == "2020-2021")
+gpa11_survey_19_20_21
+
+gpa11_survey_19_20_21$num_visits_bin <-as.character(gpa11_survey_19_20_21$num_visits_bin)
+gpa11_survey_19_20_21
+
+#Regression
+gpa_11 <- lm(CumulativeWeightedGPA ~ num_visits_bin, data=gpa11_survey_19_20_21)
+summary(gpa_11)
+
+#Average GPA, 11th, (>2) visits to Camp RIO   (20-21)           GPA: 3.973
+gpa11_survey_19_20_21_average_bin1 <- gpa11_survey_19_20_21%>%
+  filter(num_visits_bin == 1)%>%
+  mutate(gpa_average = sum(CumulativeWeightedGPA)/72)
+gpa11_survey_19_20_21_average_bin1
+
+#Average GPA, 11th, (1,2) visits to Camp RIO    (20-21)          GPA: 4.085
+gpa11_survey_19_20_21_average_bin0 <- gpa11_survey_19_20_21%>%
+  filter(num_visits_bin == 0)%>%
+  mutate(gpa_average = sum(CumulativeWeightedGPA)/13)
+gpa11_survey_19_20_21_average_bin0
+#------------------------------------
+#19-20
+gpa11_survey_19<- gpa_survey_19_20_21 %>%
+  filter(GradeLevelID == "11")%>%
+  filter(AcademicYear == "2019-2020")
+gpa11_survey_19
+
+gpa11_survey_19$num_visits_bin <-as.character(gpa11_survey_19$num_visits_bin)
+gpa11_survey_19
+
+#Regression
+#gpa_10_19 <- lm(CumulativeWeightedGPA ~ num_visits_bin, data=gpa10_survey_19)
+#summary(gpa_10_19)
+
+#Average GPA, 11th, (>2) visits to Camp RIO  (19-20)            GPA: 3.943
+gpa11_survey_19_average_bin1 <- gpa11_survey_19%>%
+  filter(num_visits_bin == 1)%>%
+  mutate(gpa_average = sum(CumulativeWeightedGPA)/142)
+gpa11_survey_19_average_bin1
+
+#Average GPA, 11th, (1,2) visits to Camp RIO  (19-20)             GPA: 3.923
+gpa11_survey_19_average_bin0 <- gpa11_survey_19%>%
+  filter(num_visits_bin == 0)%>%
+  mutate(gpa_average = sum(CumulativeWeightedGPA)/36)
+gpa11_survey_19_average_bin0
+
+
+
+```
+
+12th Grade (GPA)
+11th Grade (GPA)
+(20-21):     >2 visits:    3.943         *3.943-4.057 = -0.114   (19-20 is larger)
+            (1,2) visits:  3.923         *3.923-3.880 =  0.043   (20-21 is larger)
+            
+(19-20):     >2 visits:    4.057
+            (1,2) visits:  3.880
+```{r}
+
+#20-21
+gpa12_survey_19_20_21 <- gpa_survey_19_20_21 %>%
+  filter(GradeLevelID == "12")%>%
+  filter(AcademicYear == "2020-2021")
+gpa12_survey_19_20_21
+
+gpa12_survey_19_20_21$num_visits_bin <-as.character(gpa12_survey_19_20_21$num_visits_bin)
+gpa12_survey_19_20_21
+
+#Regression
+#gpa_12 <- lm(CumulativeWeightedGPA ~ num_visits_bin, data=gpa12_survey_19_20_21)
+#summary(gpa_12)
+
+#Average GPA, 11th, (>2) visits to Camp RIO   (20-21)           GPA: 3.943
+gpa12_survey_19_20_21_average_bin1 <- gpa12_survey_19_20_21%>%
+  filter(num_visits_bin == 1)%>%
+  mutate(gpa_average = sum(CumulativeWeightedGPA)/142)
+gpa12_survey_19_20_21_average_bin1
+
+#Average GPA, 11th, (1,2) visits to Camp RIO    (20-21)          GPA: 3.923
+gpa12_survey_19_20_21_average_bin0 <- gpa12_survey_19_20_21%>%
+  filter(num_visits_bin == 0)%>%
+  mutate(gpa_average = sum(CumulativeWeightedGPA)/36)
+gpa12_survey_19_20_21_average_bin0
+#------------------------------------
+#19-20
+gpa12_survey_19<- gpa_survey_19_20_21 %>%
+  filter(GradeLevelID == "12")%>%
+  filter(AcademicYear == "2019-2020")
+gpa12_survey_19
+
+gpa12_survey_19$num_visits_bin <-as.character(gpa12_survey_19$num_visits_bin)
+gpa12_survey_19
+
+#Regression
+#gpa_10_19 <- lm(CumulativeWeightedGPA ~ num_visits_bin, data=gpa10_survey_19)
+#summary(gpa_10_19)
+
+#Average GPA, 11th, (>2) visits to Camp RIO  (19-20)            GPA: 4.057
+gpa12_survey_19_average_bin1 <- gpa12_survey_19%>%
+  filter(num_visits_bin == 1)%>%
+  mutate(gpa_average = sum(CumulativeWeightedGPA)/26)
+gpa12_survey_19_average_bin1
+
+#Average GPA, 11th, (1,2) visits to Camp RIO  (19-20)             GPA: 3.880
+gpa12_survey_19_average_bin0 <- gpa12_survey_19%>%
+  filter(num_visits_bin == 0)%>%
+  mutate(gpa_average = sum(CumulativeWeightedGPA)/2)
+gpa12_survey_19_average_bin0
+
+
+
+```
+
+ACT data
+```{r}
+
+act <- get_table(.table_name = "ACT", .database_name = "Dashboard", .schema = "dbo") %>%
+  collect()
+act
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,605 @@
+---
+title: "Assessments, Matric./Persist, AP"
+output: html_notebook
+---
+Second half of the CAmp RIO analysis. The other RMD "Camp RIO Analysis 20-21" was getting too long, so this is a continuation of that analysis.
+
+Assessments (STAAR, Sem. Exams IABWA,); AP; Matric./Persist
+
+
+
+ASSESSMENTS
+
+
+Pull in STAAR data. Pull in IABWA (Sem. Exams) data. Look at both tables.
+```{r}
+#staar
+
+#reading and mathematics grades 3rd 4th 5h 6th 7th 8th, writing grades 4th AND 7th, science grades 5th and 8th, social studies 8th grade, EOC English I, English II, Algebra I, Biology, U.S. History; optional English III and Alegbra II by district.
+
+#remove all non-science subjects:
+staar_clean <- staar%>%
+  clean_names()
+
+staar_clean
+
+#omit these topics:
+#English I
+#English II
+#U.S. History
+#Algebra I
+#Math
+#Writing
+#Reading
+#Social Studies
+
+#keep science topics:
+#Biology 
+#Science
+
+
+staar_science <- staar_clean %>%
+  filter(subject_code != "English I") %>%
+  filter(subject_code != "English II") %>%
+  filter(subject_code != "U.S. History") %>%
+  filter(subject_code != "Algebra I") %>%
+  filter(subject_code != "Math") %>%
+  filter(subject_code != "Writing") %>%
+  filter(subject_code != "Reading") %>%
+  filter(subject_code != "Social Studies")%>%
+  filter(subject_code == "Science") #4,593 rows of "Science"
+  
+staar_science  #4,593
+
+
+staar_biology <- staar_clean %>%
+  filter(subject_code != "English I") %>%
+  filter(subject_code != "English II") %>%
+  filter(subject_code != "U.S. History") %>%
+  filter(subject_code != "Algebra I") %>%
+  filter(subject_code != "Math") %>%
+  filter(subject_code != "Writing") %>%
+  filter(subject_code != "Reading") %>%
+  filter(subject_code != "Social Studies")%>%
+  filter(subject_code == "Biology") #4,593 rows of "Science"
+  
+staar_biology  #3,902 rows
+
+
+#select the variables we need (for both tables, "staar_science" and "staar_biology)
+
+#raw score is number correct
+#scale score can be interpreted across different sets of test questions; allow direct comparisons of student performance 
+#Use "scale_score" not "raw_score"
+
+staar_biology1 <- staar_biology %>%
+  select(local_student_id, subject_code, grade_level, scale_score, school_year) 
+staar_biology1
+
+staar_science1 <- staar_science %>%
+  select(local_student_id, subject_code, grade_level, scale_score, school_year) 
+staar_science1
+
+
+#change "grade_level" from character to numeric (both tables, "staar_biology1" and "staar_science1")
+staar_biology1$grade_level <-as.numeric(staar_biology1$grade_level)
+staar_biology1                  #looks like the only grade level who took "biology" was 9th grade (no one from 10th, 11th, or 12th                                    took the "biology" STAAR exam).
+
+staar_science1$grade_level <-as.numeric(staar_science1$grade_level)
+staar_science1                  #looks like the only grade level who took "biology" was 8th grade (no one from 5th grade took the                                     "Science" STAAR exam).
+
+#change "student_id" to numeric for both tables
+staar_biology1$local_student_id <-as.numeric(staar_biology1$local_student_id)
+staar_biology1 
+
+staar_science1$local_student_id <-as.numeric(staar_science1$local_student_id)
+staar_science1 
+
+
+```
+
+
+Join the staar tables to the student survey table.
+```{r}
+
+#Student Survey CP (20-21)
+
+survey_20_21_CP <- read_excel("C:/Users/maura.carter/ideapublicschools.org/Evaluation of Camp Rio - Documents/Camp RIO Survey - Video - College Prep.xlsx") %>%
+  mutate(StudentID = as.numeric(`Please enter your student number.`))
+
+survey_20_21_CP
+
+#Clean the variable names (too many spaces/long!)
+library(janitor)
+survey2_20_21_CP <- survey_20_21_CP %>%
+  clean_names()
+#head(survey2_20_21_CP)
+
+survey3_20_21_CP <- survey2_20_21_CP%>%
+  mutate(num_visits = before_today_how_many_times_have_you_visited_camp_rio, na.rm = TRUE)
+#survey3_20_21_CP
+
+survey3_20_21_CP$num_visits <-as.numeric(survey3_20_21_CP$num_visits)
+#survey3_20_21_CP
+
+#All a col called "num_visits_bin" to change number of visits to Binary (3+ = 1, 1 or 2 = 0;  OR:  >2 = 1, <3 = 0)
+survey4_20_21_CP <- survey3_20_21_CP %>%
+  mutate(num_visits_bin = num_visits, na.rm = TRUE)
+#survey4_20_21_CP
+
+# "num_visits_bin" col: Make everything less than 2 (0, 1 prior visits) a "0". It really means that if they had 0 visits, it's 1 visit when you include today. If they had 1 prior visit, it's 2 including today, etc.
+survey4_20_21_CP$num_visits_bin[survey4_20_21_CP$num_visits_bin < 2] <- 0
+#survey4_20_21_CP
+
+# "num_visits_bin" col: Make everything larger than 0 (all visits that are 2, 3, 4+ for prior visits) to a "1". It will actually start at "3" because if you include today's visit, you do 2 + 1 = 3.
+survey4_20_21_CP$num_visits_bin[survey4_20_21_CP$num_visits_bin > 0] <- 1
+#survey4_20_21_CP
+
+survey5_20_21_CP <- survey4_20_21_CP %>%
+  select(student_id, num_visits_bin, which_grade_are_you_currently_in)
+survey5_20_21_CP
+
+#----------------------------------
+#Student Survey Academy (20-21)
+
+
+survey_20_21_AC <- read_excel("C:/Users/maura.carter/ideapublicschools.org/Evaluation of Camp Rio - Documents/Camp RIO Survey - Video - Academy.xlsx")  %>% 
+  mutate(StudentID = as.numeric(`Please enter your student number.`))
+
+#survey_20_21_AC
+
+#Clean the variable names (too many spaces/long!)
+library(janitor)
+survey2_20_21_AC <- survey_20_21_AC %>%
+  clean_names()
+#head(survey2_20_21_AC)
+
+survey3_20_21_AC <- survey2_20_21_AC %>%
+  mutate(num_visits = before_today_how_many_times_have_you_visited_camp_rio, na.rm = TRUE)
+#survey3_20_21_AC
+
+survey3_20_21_AC$num_visits <-as.numeric(survey3_20_21_AC$num_visits)
+#survey3_20_21_AC
+
+#All a col called "num_visits_bin" to change number of visits to Binary (3+ = 1, 1 or 2 = 0;  OR:  >2 = 1, <3 = 0)
+survey4_20_21_AC <- survey3_20_21_AC %>%
+  mutate(num_visits_bin = num_visits, na.rm = TRUE)
+#survey4_20_21_AC
+
+# "num_visits_bin" col: Make everything less than 2 (0, 1 prior visits) a "0". It really means that if they had 0 visits, it's 1 visit when you include today. If they had 1 prior visit, it's 2 including today, etc.
+survey4_20_21_AC$num_visits_bin[survey4_20_21_AC$num_visits_bin < 2] <- 0
+#survey4_20_21_AC
+
+# "num_visits_bin" col: Make everything larger than 0 (all visits that are 2, 3, 4+ for prior visits) to a "1". It will actually start at "3" because if you include today's visit, you do 2 + 1 = 3.
+survey4_20_21_AC$num_visits_bin[survey4_20_21_AC$num_visits_bin > 0] <- 1
+#survey4_20_21_AC
+
+survey5_20_21_AC <- survey4_20_21_AC %>%
+  select(student_id, num_visits_bin, which_grade_are_you_currently_in)
+survey5_20_21_AC
+#-------------------------------------
+
+#join College Prep and Academy 20-21 surveys
+survey_20_21 <- bind_rows(survey5_20_21_AC, survey5_20_21_CP, .id=NULL)
+survey_20_21
+
+survey_20_21 <- survey_20_21 %>%
+  mutate(local_student_id = student_id) %>%
+  select(num_visits_bin, which_grade_are_you_currently_in, local_student_id)
+survey_20_21
+
+#AC and CP, ONLY 20-21
+survey_20_21 #MASTER table for student survey 20-21, AC/CP
+
+```
+
+Join staar_biology1 and staar_science1 tables to "survey_20_21" (student survey data for 20-21)
+```{r}
+#1) staar_biology1 and survey_20_21
+
+
+biology_survey_20_21 <- inner_join(staar_biology1, survey_20_21, by=NULL)
+biology_survey_20_21 #91 rows
+
+biology_survey_20_21 <- biology_survey_20_21 %>%
+  select(local_student_id, subject_code, grade_level, scale_score, num_visits_bin, school_year)
+biology_survey_20_21 #91 rows, 8th and 9th graders
+
+#2) staar_science1 and survey_20_21
+science_survey_20_21 <- inner_join(staar_science1, survey_20_21, by=NULL)
+science_survey_20_21 #603 rows
+
+science_survey_20_21 <- science_survey_20_21 %>%
+  select(local_student_id, subject_code, grade_level, scale_score, num_visits_bin, school_year)
+science_survey_20_21 #603 rows, 5th and 8th graders
+#------------------------------------------------
+
+#3) ALL Science topics for STAAR ("Science" and "Biology" and "Student Survey 20-21")
+bio_sci_survey_20_21 <- bind_rows(science_survey_20_21, biology_survey_20_21, .id=NULL)
+bio_sci_survey_20_21  #694 rows total which means it worked, since 91+603 = 694.
+
+
+#MASTER TABLE FOR STAAR SCIENCE SUBJECT: 
+#   bio_sci_survey_20_21
+
+```
+
+
+
+5th Grade BINS: STAAR (Science only)
+
+```{r}
+
+staar5 <- bio_sci_survey_20_21 %>%
+  filter(grade_level == 5)
+staar5    #535 rows of data
+
+#bin1 (>2 visits), 5th grade staar science
+
+staar5_bin1 <- staar5 %>%
+  filter(num_visits_bin == 1)
+staar5_bin1  #325 rows
+
+
+  
+#bin0 (0-2 visits), 5th grade staar science
+
+staar5_bin0 <- staar5 %>%
+  filter(num_visits_bin == 0)
+staar5_bin0   #210 rows
+  
+
+
+
+```
+
+
+ 5th STAAR average scaled score (Science)
+```{r}
+#staar5_bin1, staar5_bin0  (df's used)
+
+#bin1   n=325                                          (bin1, 5th) Average Scale Score (staar science): 3775.738
+staar5_bin1_ave <- staar5_bin1 %>%
+  mutate(scale_score_average = sum(scale_score)/325)
+staar5_bin1_ave
+
+
+#bin0   n=210                                      (bin0, 5th) Average Scale Score (staar science): 3797.367
+staar5_bin0_ave <- staar5_bin0 %>%
+  mutate(scale_score_average = sum(scale_score)/210)
+staar5_bin0_ave
+
+
+```
+
+
+
+8th Grade BINS:   STAAR (Science and Biology combined)
+```{r}
+staar8 <- bio_sci_survey_20_21 %>%
+  filter(grade_level == 8)
+staar8    #107 rows of data
+
+#bin1 (>2 visits), 8th grade staar science
+
+staar8_bin1 <- staar8 %>%
+  filter(num_visits_bin == 1)
+staar8_bin1  #79 rows
+
+
+  
+#bin0 (0-2 visits), 8th grade staar science
+
+staar8_bin0 <- staar8 %>%
+  filter(num_visits_bin == 0)
+staar8_bin0   #28 rows
+  
+
+
+```
+
+
+ 8th STAAR average scaled score (Science & Biology, combined)
+```{r}
+#staar8_bin1, staar8_bin0  (df's used)
+
+#bin1   n=79                                          (bin1, 8th) Average Scale Score (staar science & bio combined): 4181.544
+staar8_bin1_ave <- staar8_bin1 %>%
+  mutate(scale_score_average = sum(scale_score)/79)
+staar8_bin1_ave
+
+
+#bin0   n=28                                      (bin0, 8th) Average Scale Score (staar science & bio combined): 4177.107
+staar8_bin0_ave <- staar8_bin0 %>%
+  mutate(scale_score_average = sum(scale_score)/28)
+staar8_bin0_ave
+
+```
+
+
+
+9th Grade BINS: STAAR (Biology only)
+```{r}
+
+staar9 <- bio_sci_survey_20_21 %>%
+  filter(grade_level == 9)
+staar9    #52 rows of data
+
+#bin1 (>2 visits), 9th grade staar science
+
+staar9_bin1 <- staar9 %>%
+  filter(num_visits_bin == 1)
+staar9_bin1  #35 rows
+
+
+  
+#bin0 (0-2 visits), 8th grade staar science
+
+staar9_bin0 <- staar9 %>%
+  filter(num_visits_bin == 0)
+staar9_bin0   #17 rows
+  
+
+
+
+```
+
+ 9th STAAR average scaled score (Biology only)
+```{r}
+#staar9_bin1, staar9_bin0  (df's used)
+
+#bin1   n=35                                        (bin1, 9th) Average Scale Score (staar biology only): 4724.486
+staar9_bin1_ave <- staar9_bin1 %>%
+  mutate(scale_score_average = sum(scale_score)/35)
+staar9_bin1_ave
+
+
+#bin0   n=17                                      (bin0, 9th) Average Scale Score (staar biology only): 4108.176
+staar9_bin0_ave <- staar9_bin0 %>%
+  mutate(scale_score_average = sum(scale_score)/17)
+staar9_bin0_ave
+
+
+```
+
+total Averages (STAAR, 5th, 8th, 9th)
+```{r}
+#bin1, all grades
+staar_N1 = 35 + 79 + 325 
+staar_total_average1 <- (4724.486*35 + 4181.544*79 + 3775.738*325)/staar_N1
+
+staar_N1
+staar_total_average1
+
+  
+  
+#bin0, all grades
+staar_N2 =  17  + 28 + 210
+staar_total_average2 <- (4108.176*17 + 4177.107*28 + 3797.367*210)/staar_N2
+
+staar_N2
+staar_total_average2
+```
+
+
+NORMALITY (STAAR)
+
+5th, 8th, 9th, Combined Grades 5th/8th/9th
+
+
+Result: tested each grade, and "all" grades combined for Normality for bin1. None of them were normal (except for 9th grade bin1), so don't have to repeat the tests for each of those for bin0. Go ahead and run Whitney Mann U non-parametric test for non-normal data to compare medians for ave. staar science score for each grade level, then for total average staar science score for each bin (including all grades combined).
+```{r}
+#TEST
+#Shapiro Wilks null: data is normal. a sig. p value <0.05 means the null is not supported, and the data is not normal.
+
+#A) bin1, 5th            n=325
+#staar5_bin1 (df used)
+
+shapiro.test(staar5_bin1$scale_score) #p = 0.0004 < 0.05 so it's NOT normal.
+
+#shapiro wilks says it's not Normal, but here's the visual inspection (qq plot).
+ggqqplot(staar5_bin1$scale_score, title = "Normal QQ Plot for STAAR Ave. Score, 5th, (>2) Visits") #looks fairly normal, though.
+
+#density plot to see if it's "Bell" shaped
+library("ggpubr")
+ggdensity(staar5_bin1$scale_score, 
+          main = "Density plot of STAAR Ave. Score, 5th",
+          xlab = "STAAR Ave. Score, 5th, (>2 Visits)")    #It looks pretty bell shaped.
+
+#-----------------------------------
+
+#B) bin1, 8th            n=79
+#staar8_bin1
+shapiro.test(staar8_bin1$scale_score) #p = 0.0224 < 0.05 so it's NOT normal.
+
+#shapiro wilks says it's not Normal, but here's the visual inspection (qq plot).
+ggqqplot(staar8_bin1$scale_score, title = "Normal QQ Plot for STAAR Ave. Score, 8th, (>2) Visits") #looks fairly normal, though.
+
+#density plot to see if it's "Bell" shaped
+library("ggpubr")
+ggdensity(staar8_bin1$scale_score, 
+          main = "Density plot of STAAR Ave. Score, 8th",
+          xlab = "STAAR Ave. Score, 8th, (>2 Visits)")    #It looks pretty bell shaped.
+
+#------------------------------
+
+#C) bin1, 9th            n=35
+#staar9_bin1
+shapiro.test(staar9_bin1$scale_score) #p = 0.647 > 0.05 so it's normal.
+
+#shapiro wilks says it's not Normal, but here's the visual inspection (qq plot).
+ggqqplot(staar9_bin1$scale_score, title = "Normal QQ Plot for STAAR Ave. Score, 9th, (>2) Visits") #looks fairly normal.
+
+#density plot to see if it's "Bell" shaped
+library("ggpubr")
+ggdensity(staar9_bin1$scale_score, 
+          main = "Density plot of STAAR Ave. Score, 9th",
+          xlab = "STAAR Ave. Score, 9th, (>2 Visits)")    #It looks like it's approaching bi-modal. Doesn't look as Normal as 5th and 8th density curves.
+
+#----------------------------------------------
+
+#D) bin1, combined grades 5, 8, 9th.            n=439
+#bio_sci_survey_20_21 filter for "num_visits_bin == 1".
+
+#bio_sci_survey_20_21_bin1 <- bio_sci_survey_20_21 %>%
+ # filter(num_visits_bin == 1)
+#bio_sci_survey_20_21_bin1
+
+shapiro.test(bio_sci_survey_20_21_bin1$scale_score) #p = 0.0000000331 < 0.05 so it's NOT normal.
+
+#shapiro wilks says it's not Normal, but here's the visual inspection (qq plot).
+ggqqplot(bio_sci_survey_20_21_bin1$scale_score, title = "Normal QQ Plot for STAAR Ave. Score, All Grades 5, 8, 9th, (>2) Visits") #doesn't look normal, curves.
+
+#density plot to see if it's "Bell" shaped
+library("ggpubr")
+ggdensity(bio_sci_survey_20_21_bin1$scale_score, 
+          main = "Density plot of STAAR Ave. Score, All Grades 5, 8, 9th",
+          xlab = "STAAR Ave. Score, All Grades 5, 8, 9th, (>2 Visits)")    #doesn't look normal, too steep
+
+
+
+
+
+```
+
+WHITNEY MANN U TEST (STAAR)
+
+
+Compare 2 groups (0-2 visits, >2 visits) for each grade level; then for entire ave. STAAR sci. score (including all grade levels in each group.) Use Whitney Mann U test for non-parametric data.
+```{r}
+#A) 5th GRADE (bin1), >2 visits                NOT SIG DIFFERENT: 5th grade ave. STAAR science scores (no difference)
+#staar5_bin1 
+
+STAAR_5_bin1<-staar5_bin1$scale_score
+STAAR_5_bin1
+
+#5th GRADE (bin0), 0-2 visits
+#staar5_bin0
+
+STAAR_5_bin0 <- staar5_bin0$scale_score
+STAAR_5_bin0
+
+#Whitney Mann U Test (non-parametric test since the 2 groups of data were not both normal)
+
+wilcox.test(STAAR_5_bin0, STAAR_5_bin1)  #conclusion: Medians do NOT differ (they are not sig. different STAAR scores)
+
+wilcox.test(STAAR_5_bin0, STAAR_5_bin1, alternative = "greater") #Not sig. different (no difference in STAAR scores)
+wilcox.test(STAAR_5_bin0, STAAR_5_bin1, alternative = "less") #Not sig. differernt (no diff. in STAAR scores)
+
+#-----------------------------------------
+
+#B) 8th GRADE (bin1), >2 visits                NOT SIG DIFFERENT: 8th grade ave. STAAR science scores (no difference)
+#staar8_bin1 
+
+STAAR_8_bin1<-staar8_bin1$scale_score
+STAAR_8_bin1
+
+#5th GRADE (bin0), 0-2 visits
+#staar5_bin0
+
+STAAR_8_bin0 <- staar8_bin0$scale_score
+STAAR_8_bin0
+
+#Whitney Mann U Test (non-parametric test since the 2 groups of data were not both normal)
+
+wilcox.test(STAAR_8_bin0, STAAR_8_bin1)  #conclusion: Medians do NOT differ (they are not sig. different STAAR scores)
+
+wilcox.test(STAAR_8_bin0, STAAR_8_bin1, alternative = "greater") #Not sig. different (no difference in STAAR scores)
+wilcox.test(STAAR_8_bin0, STAAR_8_bin1, alternative = "less") #Not sig. differernt (no diff. in STAAR scores)
+
+#_______________________________________________
+
+#C) 9th GRADE (bin1), >2 visits                NOT SIG DIFFERENT: 9th grade ave. STAAR science scores (no difference)
+#staar5_bin1 
+
+STAAR_9_bin1<-staar9_bin1$scale_score
+STAAR_9_bin1
+
+#9th GRADE (bin0), 0-2 visits
+#staar5_bin0
+
+STAAR_9_bin0 <- staar9_bin0$scale_score
+STAAR_9_bin0
+
+#Whitney Mann U Test (non-parametric test since the 2 groups of data were not both normal)
+
+wilcox.test(STAAR_9_bin0, STAAR_9_bin1)  #conclusion: Medians DO differ (they ARE sig. different STAAR med. scores)
+
+wilcox.test(STAAR_9_bin0, STAAR_9_bin1, alternative = "greater") #Not sig. different (no difference in STAAR med. scores for highest scores)
+wilcox.test(STAAR_9_bin0, STAAR_9_bin1, alternative = "less") #ARE sig. differernt (diff. in STAAR med. scores for lowest scores)
+
+
+#----------------------------------------
+
+#D) ALL GRADEs 5, 8, 9th, (bin1), >2 visits                NOT SIG DIFFERENT: ALL GRADES 5, 8, 9th ave. STAAR science scores (no difference)
+#bio_sci_survey_20_21_bin1
+
+STAAR_a_bin1<-bio_sci_survey_20_21_bin1$scale_score
+STAAR_a_bin1
+
+#5th GRADE (bin0), 0-2 visits
+#bio_sci_survey_20_21 must filter for ("num_visits_bin == 0")
+bio_sci_survey_20_21_bin0 <- bio_sci_survey_20_21 %>%
+  filter(num_visits_bin == 0)
+
+STAAR_a_bin0 <- bio_sci_survey_20_21_bin0$scale_score
+STAAR_a_bin0
+
+#Whitney Mann U Test (non-parametric test since the 2 groups of data were not both normal)
+
+wilcox.test(STAAR_a_bin0, STAAR_a_bin1)  #conclusion: Medians do NOT differ (they are not sig. different STAAR med. scores)
+
+wilcox.test(STAAR_a_bin0, STAAR_a_bin1, alternative = "greater") #Not sig. different (no difference in STAAR median scores)
+wilcox.test(STAAR_a_bin0, STAAR_a_bin1, alternative = "less") #Not sig. different (no diff. in STAAR median scores)
+
+
+```
+
+END //
+
+-----------------------------------------
+
+
+
+MATRICULATION / PERSISTENCE (College)
+
+
+Pull in data. View. Start cleaning.
+```{r}
+
+
+
+
+```
+
+
+
+```{r}
+
+
+
+
+
+```
+
+
+
+```{r}
+
+
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+

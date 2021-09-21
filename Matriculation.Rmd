@@ -1,0 +1,732 @@
+---
+title: "Matriculation & Persistence"
+author: maura carter
+output: html_notebook
+---
+
+survey_19-20_CP
+```{r}
+
+survey_19_20_CP
+students_18_19
+
+
+```
+
+Import the matriculation data from the Tarah Burris "raw data spring 2021" file she sent me from NSC. Clean names for the columns (snake case).
+
+```{r}
+library(janitor)
+
+
+matric <- NSC_raw_spring_2021
+matric
+
+
+matric <- matric %>%
+  clean_names()
+matric
+
+
+
+```
+
+
+Clean the Matric data, remove those without a record, and those who already graduated (to start with).
+```{r}
+ 
+matric1 <- matric %>%
+  filter(record_found_y_n != "N")%>%
+  filter(graduated != "Y")
+matric1
+
+matric
+
+34913 - 32720  #omitted 2193 rows after removing "no record" and "graduated"
+
+
+
+
+
+
+```
+Modify dates for Enrollment Start/End, to substr only for the "year" positions 3 and 4. Example: 2013 is positions 1, 2, 3, 4, so we would substr for only positions 3 and 4, leaving us with "13" instead of "2013" as the year.
+```{r}
+
+matric2 <- matric1%>%
+  #filter(best_composite == TRUE) %>%
+  mutate(enroll_start_year = substr(enrollment_begin, 3,4), sep = "")%>%
+  mutate(enroll_end_year = substr(enrollment_end, 3, 4), sep = "")
+matric2
+
+matric2_2 <- matric2 %>%
+    mutate(enroll_start_month = substr(enrollment_begin, 5,6), sep = "")%>%
+  mutate(enroll_end_month = substr(enrollment_end, 5, 6), sep = "")
+matric2_2
+
+
+
+```
+
+
+Filter out anyone who wasn't full time ("F")
+
+```{r}
+
+
+matric3 <- matric2_2 %>%
+  filter(enrollment_status == "F")
+matric3  #22,210 rows
+
+
+
+```
+Filter Enrollment Start for only 2019 and 2020. "19" and "20". 2019 is used for Persistence, and 2020 is used for Matriculation. We are not counting anyone who matriculated for Winter 2021, as this is not immediately following graduation. Only Matriculation for Fall 2020
+```{r}
+#this is only for Full Time enrollment Status "F"
+matric4 <- matric3 %>%
+  filter(enroll_start_year != 12)%>%
+  filter(enroll_start_year != 13)%>%
+  filter(enroll_start_year != 14)%>%
+  filter(enroll_start_year != 15)%>%
+  filter(enroll_start_year != 16)%>%
+  filter(enroll_start_year != 17)%>%
+  filter(enroll_start_year != 18)%>%
+  filter(enroll_start_year != 21)%>%
+  mutate(student_id = substr(your_unique_identifier, 1,9), sep = " ")%>%
+  select(student_id, enrollment_begin, enrollment_end, enroll_start_year, enroll_end_year, enroll_start_month, enroll_end_month)
+matric4 #9,328 rows
+
+matric4$student_id <-as.numeric(matric4$student_id)
+matric4 #9328 rows
+
+matric4 <- na.omit(matric4)
+matric4
+
+#---------------------------------------------
+#all enrollment statuses other than "NA" (Full time, part time, half time, quarter time)
+matric4_4 <- matric2_2 %>%
+  filter(enroll_start_year != 12)%>%
+  filter(enroll_start_year != 13)%>%
+  filter(enroll_start_year != 14)%>%
+  filter(enroll_start_year != 15)%>%
+  filter(enroll_start_year != 16)%>%
+  filter(enroll_start_year != 17)%>%
+  filter(enroll_start_year != 18)%>%
+  filter(enroll_start_year != 21)%>%
+  mutate(student_id = substr(your_unique_identifier, 1,9), sep = " ")%>%
+  select(student_id, enrollment_status, enrollment_begin, enrollment_end, enroll_start_year, enroll_end_year, enroll_start_month, enroll_end_month)
+matric4_4 #9,328 rows
+
+matric4_4$student_id <-as.numeric(matric4_4$student_id)
+matric4_4 #13,891 rows
+
+matric4_5 <- na.omit(matric4_4)
+matric4_5 #13,891
+```
+Join matriculation table to student survey table.
+```{r}
+survey_19_20_CP_clean <- survey_19_20_CP%>%
+  clean_names()
+survey_19_20_CP_clean
+
+survey_19_20_CP_clean$which_grade_are_you_currently_in <- as.numeric(survey_19_20_CP_clean$which_grade_are_you_currently_in)
+survey_19_20_CP_clean
+
+#include only those students who atteneded Camp Rio in 19-20 as Seniors, who will graduate HS in Spring 2020, and matriculate to college in FALL 2020.
+
+  
+#---------------------------------
+
+
+
+
+
+```
+survey
+```{r}
+
+#Student Survey: College Prep 19-20
+
+survey_19_20_CP <- read_excel("C:/Users/maura.carter/ideapublicschools.org/Evaluation of Camp Rio - Documents/Camp RIO Survey - College Prep.xlsx")%>%
+  mutate(StudentID = as.numeric(`Please enter your student number.`))
+
+survey_19_20_CP
+
+#Clean the variable names (too many spaces/long!)
+library(janitor)
+survey2_19_20_CP <- survey_19_20_CP %>%
+  clean_names()
+head(survey2_19_20_CP)
+
+survey3_19_20_CP <- survey2_19_20_CP%>%
+  mutate(num_visits = before_today_how_many_times_have_you_visited_camp_rio, na.rm = TRUE)
+survey3_19_20_CP
+
+survey3_grade_12 <- survey3_19_20_CP %>%
+  filter(which_grade_are_you_currently_in == "12")
+survey3_grade_12
+
+survey3_19_20_CP$num_visits <-as.numeric(survey3_19_20_CP$num_visits)
+survey3_19_20_CP
+
+#All a col called "num_visits_bin" to change number of visits to Binary (3+ = 1, 1 or 2 = 0;  OR:  >2 = 1, <3 = 0)
+survey4_19_20_CP <- survey3_19_20_CP %>%
+  mutate(num_visits_bin = num_visits, na.rm = TRUE)
+survey4_19_20_CP
+
+# "num_visits_bin" col: Make everything less than 2 (0, 1 prior visits) a "0". It really means that if they had 0 visits, it's 1 visit when you include today. If they had 1 prior visit, it's 2 including today, etc.
+survey4_19_20_CP$num_visits_bin[survey4_19_20_CP$num_visits_bin < 2] <- 0
+survey4_19_20_CP
+
+# "num_visits_bin" col: Make everything larger than 0 (all visits that are 2, 3, 4+ for prior visits) to a "1". It will actually start at "3" because if you include today's visit, you do 2 + 1 = 3.
+survey4_19_20_CP$num_visits_bin[survey4_19_20_CP$num_visits_bin > 0] <- 1
+survey4_19_20_CP
+
+survey5_19_20_CP <- survey4_19_20_CP %>%
+  select(student_id, num_visits_bin, which_grade_are_you_currently_in)
+survey5_19_20_CP
+
+
+```
+
+Join Survey 19-20 CP Table to Matric4 table (from NSC). All students who matriculated to college are on here, regardless of if they attended Camp RIO or not.
+```{r}
+#only Full time enrollment status "F"
+#install.packages("janitor")
+library(janitor)
+survey_matric <-left_join(survey5_19_20_CP, matric4, by="student_id")
+survey_matric #568 rows, includes everyone who matriculated to college, but only some of those attended Camp RIO
+
+# survey5_19_20_CP has #568 rows
+# matric4 has 11,724 rows
+
+
+
+#-----------------------------------
+#All enrollment statuses other than "NA"
+survey_matric_all_status <-left_join(survey5_19_20_CP, matric4_4, by="student_id")
+survey_matric_all_status #  rows, includes everyone who matriculated to college, but only some of those attended Camp RIO
+
+
+
+
+
+
+
+```
+
+
+Join survey_matric to the "students" table, to get their grade level ID. First change students col "StudentNumber" to "student_id", to join by this new col.
+```{r}
+#create col "student_id"
+students1 <- students %>%
+  mutate(student_id = StudentNumber)
+students1
+
+students2 <- students1 %>%
+  filter(AcademicYear == "2019-2020")
+students2 #60,215 rows
+
+students3 <- students2 %>%
+  select(GradeLevelID, student_id)
+students3
+```
+
+
+```{r}
+#Only Full time enrollment status
+
+survey_matric_stus <- inner_join(survey_matric, students3, by=NULL)
+survey_matric_stus #1093 rows
+
+
+survey_matric_stus <- survey_matric_stus %>%
+  clean_names()
+survey_matric_stus
+
+#Master Table for 19-20 CP Surveys, Matriculation table from NSC, and Students table (need col. GradeLevelID)
+survey_matric_stus
+#---------------------------
+#all enrollment statuses
+#this type of join removes all the invaled student_ids from the Survey, leaving only students with valid student 108 IDs in the analysis.
+
+#this is only academic year 2019-2020, because the surveys were filterd for that year "Camp Rio Survey" (not Camp Rio Video)
+survey_matric_stus_all_status <-inner_join(survey_matric_all_status, students3, by = NULL)
+survey_matric_stus_all_status 
+
+#Master Table all statuses (NSC Matric table, Students table, Surveys_19-20_CP)
+survey_matric_stus_all_status #567 rows for 2019-2020 AcademicYear on students table
+
+```
+
+
+
+(All enrollment statuses)
+Remove Enrollment Start Dates, except for May, June, July, August, Sept, Oct, Nov, Dec. (Take out Jan, Feb, March, April)
+```{r}
+all_status1 <- survey_matric_stus_all_status %>%
+  filter(enroll_start_month != "01")%>%
+  filter(enroll_start_month != "02")%>%
+  filter(enroll_start_month != "03")%>%
+  filter(enroll_start_month != "04")
+  
+all_status1 #no one was added or removed because everyone started college in August (month "08") who matriculated to college
+
+
+
+
+```
+
+Filter for GradeLevelId = 12, to see how many people went to Camp Rio during 2019-2020, and of those, how many matriculated to college during Fall 2020 (as def. by "may - November" start months in 2020 on the NSC data)
+```{r}
+
+grade_12_campers <- survey_matric_stus_all_status %>%
+  filter(GradeLevelID == 12)
+grade_12_campers 
+
+#22 Full time (as as original analysis)
+#1 NA (transfered or quit, etc.)
+#2 Half Time status
+#3 quarter time
+
+#28/28 total matriculated to college in Fall 2020 (May - Dec. enrollment start month), who visited Camp Rio in 2019-2020 academic year as 12th graders
+
+
+#original analysis only used full time status, so college matric from camp rio participants had 22 (still does, using only status F)
+# current analysis used all enrollment statuses, so college matric for camp rio participants = 28
+
+
+
+
+```
+
+
+
+
+
+Remove Enrollment Start dates in the Spring or Summer, including March, April, may, june, july (03, 04, 05, 06, 07).
+```{r}
+#Full time enrollment status
+matric5 <- matric4 %>%
+  filter(enroll_start_month != "02")%>%
+  filter(enroll_start_month != "03")%>%
+  filter(enroll_start_month != "04")%>%
+  filter(enroll_start_month != "05")%>%
+  filter(enroll_start_month != "06")%>%
+  filter(enroll_start_month != "07")%>%
+  filter(enroll_start_month !="11")%>%
+  filter(enroll_start_month != "12")
+matric5  #8024 rows
+
+
+
+#-------------------------
+#all enrollment statuses
+
+
+
+
+```
+
+
+
+
+
+```{r}
+
+table1 <- full_join(survey5_19_20_CP, matric5, by=NULL)
+table1 #8570 rows
+
+#make "what grade are you currently in" numeric data
+table1$which_grade_are_you_currently_in <- as.numeric(table1$which_grade_are_you_currently_in)
+table1
+
+#remove everyone who is not in 12th grade
+table2 <- table1 %>%
+  filter(which_grade_are_you_currently_in == 12)
+table2
+
+#-----------------------------
+students1 <- students %>%
+  mutate(student_id = StudentNumber)
+students1
+
+students2 <- students1 %>%
+  filter(AcademicYear =="2019-2020")%>%
+  select(GradeLevelID, student_id, AcademicYear)
+students2
+survey_stus <-left_join(survey5_19_20_CP, students2, by=NULL)
+survey_stus
+
+#Should I use "GradeLevelID" from Students table, or "which_grade_are_you_currently_in" from the student survey, as their grade? (to ID twelth graders for matriculation). The values don't match up for a lot of them.
+
+
+#change "which grade are you currently in" to numeric data
+survey_stus$which_grade_are_you_currently_in <- as.numeric(survey_stus$which_grade_are_you_currently_in)
+survey_stus #1109 rows
+
+
+#omit everyone not in 12th grade
+survey_stus2 <- survey_stus %>%
+  filter(which_grade_are_you_currently_in == 12)
+survey_stus2 #36 rows
+  
+  
+  
+```
+
+change "num_visits_bin" into all singular values, because whether they went 0-2 times, or 3+ times, they still attended and are counted as such. Create a new variable called "did_you_attend"
+```{r}
+library(dplyr)
+students_test <-survey_stus2 %>%
+  filter(student_id == 12345)
+students_test
+
+students_test2 <- students %>%
+  filter(StudentNumber == 12345)
+students_test2
+
+students
+survey_stus3 <- survey_stus2%>%
+  mutate(did_you_attend = num_visits_bin)
+survey_stus3 #36 rows
+
+#---------------------------
+#everyone who attended the camp, so all bin0 and bin1 are changed to 1.
+survey_stus3$did_you_attend[survey_stus3$did_you_attend == 0] <- 1
+survey_stus3
+#___________________________________
+```
+
+
+
+```{r}
+#filter for those who matriculated in 2020 to college (fall 2020), removing Fall 2019 matricualtion year (enroll_start_year != 2019, remove)
+matric5 #8024 rows
+matric6_2020 <- matric5 %>%
+  filter(enroll_start_year == 20)%>%
+  filter(enroll_start_month != "01") #remove january so it's a fall start date 
+matric6_2020 #2426 rows for 2020 matriculation year (fall 2020)
+
+
+#----------------------------
+#full join seems to be correct
+survey_stus3_matric5 <- full_join(survey_stus3, matric5, by=NULL)
+survey_stus3_matric5 
+
+survey_stus3_matric5_2020 <- survey_stus3_matric5 %>%
+  filter(enroll_start_year ==20)%>%
+  filter(enroll_start_month != "01") #remove start month of January since that's not Fall start
+survey_stus3_matric5_2020 #2426 rows
+
+survey_stus3_matric6_2020 <- full_join(survey_stus3,matric6_2020, by=NULL)
+survey_stus3_matric6_2020 #2440 rows, gained 14 rows so 14 of those who attended Camp rio did not matriculate
+
+#remove 4 rows for duplicates, so it means that we only now have 10 who did not matriculate, who attended camp rio
+
+#---------------------------------------
+#DID attend Camp Rio - Percentage who Matric to College  = 68.75%
+
+#DID ATTEND: 32   (19-20)
+#14/36 Camp Rio attendees from 19-20 did NOT Matriculate. 
+# 22/36 Camp Rio attendees from 19-20 DID Matriculate
+
+10/32    #0.3125 = 31.25% Did not matriculate
+22/32    #0.6875 = 68.75% Matriculated 
+
+#leaving in ALL rows would yield a total of 36 on the bottom
+#3 rows had "12345" as student_id
+#2 rows had "1234" as student_id
+#2 rows had "1015" as student id
+# so I left one row of each, so I removed 2 rows of 12345, 1 row or 1234, and 1 row of 1015; these didn't seem to be student numbers that appeared in the students table, only in the camp rio student survey, but I left them in to give a bigger N, so we'd have n>30 for this analysis. otherwise if I removed all of them we'd have N=29.
+
+
+#2240 rows - 36 rows for those who attended camp rio
+2240 - 36 #2204 matriculated who did not attend the camp (out of how many total 12th graders?)
+
+students_12th_2019_2020 <- students%>%
+  filter(AcademicYear == "2019-2020")%>%
+  filter(GradeLevelID == 12)%>%
+  mutate(student_id = StudentNumber)
+students_12th_2019_2020
+
+join <- full_join(students_12th_2019_2020, matric6_2020, by=NULL)
+join #2893 rows
+1261 + 2426 #(students who are seniors, matric)
+3687-2893 #794 people who enrolled who are not on the students table as 12th graders
+
+join2 <- full_join(matric6_2020, students_12th_2019_2020, by=NULL)
+join2 
+
+join_left <- left_join(students_12th_2019_2020, matric6_2020, by=NULL)
+join_left
+
+#join_left2<- left_join(matric6_2020, students_12th_2019_2020, by=NULL)
+#join_left2
+
+join_left3 <- join_left %>%
+  select(AcademicYear, GradeLevelID, student_id, enrollment_begin, enroll_start_year, enroll_start_month, enrollment_end, enroll_end_year, enroll_end_month)
+join_left3 #1267 12th graders in 2019-2020, some enrolled some didn't, included the 22 who attended camp rio
+students_12th_2019_2020 #1261 rows of 12th grade students
+
+# remove the 22 students who attended camp rio, because we want those who did not attend (remove by each of the 22 student_id numbers)
+join_left3_minus_22 <- join_left3 %>%
+  filter(student_id != 108036703)%>%
+   filter(student_id != 108062558	)%>%
+  filter(student_id != 108036689)%>% 
+   filter(student_id != 108036646)%>%
+   filter(student_id != 108036711)%>%
+   filter(student_id != 108036734)%>%
+   filter(student_id != 108041942)%>%
+   filter(student_id != 108036695)%>%
+  filter(student_id != 108036677)%>% 
+   filter(student_id !=108036669)%>%
+   filter(student_id != 108036684)%>%
+   filter(student_id != 108036653)%>%
+   filter(student_id != 108075048)%>%
+   filter(student_id != 108040578)%>%
+  filter(student_id != 108036642)%>% 
+   filter(student_id != 108058696)%>%
+   filter(student_id != 108036729)%>%
+   filter(student_id != 108036062)%>%
+  filter(student_id != 108036655)%>% 
+   filter(student_id != 108036681)%>%
+   filter(student_id != 108036668)%>%
+   filter(student_id != 108069971)
+join_left3_minus_22 #1245 rows of all 12th graders, those who matric and those who didn't matric, excluding 22 who went to camp rio
+
+
+#omit the NAs to remove rows with NAs (those who didn't matriculate), count the number of rows and subtract from 1267, giving the number who did matriculate.
+
+num_who_matric <- na.omit(join_left3_minus_22)
+num_who_matric #782 who matric to college, subtracting the 22 who attended camp rio, left with 782 who matric but did not attend camp rio
+
+#ratio of those who matric to college who did NOT attend Camp RIO:
+
+782/1245 #= 0.6281 = 62.81% who matric to college did not attend Camp RIO
+
+1245-782
+
+```
+68.75% matric , Attended Camp Rio
+62.81% matric, did NOT attend Camp Rio
+
+
+Table for the chi-Sq test
+
+                   matric          Total 
+              yes         no
+
+Camp Rio     22           10       32
+
+No Camp      782         463       1245
+
+
+Grand Total  804         473        1277  12th grade students, 19-20
+
+
+Reference: https://data-flair.training/blogs/chi-square-test-in-r/
+```{r}
+matric_chisq <- contingency_table_matriculation_chisq_19_20 #imported from Excel (I created it in excel)
+matric_chisq
+
+
+#Make a Table, using "table()" function in r
+
+table_matric_chisq <-table(matric_chisq$camp_rio, matric_chisq$matriculation)
+table_matric_chisq
+
+```
+
+
+chi-sq test to compare catagorical variables (matriculation y/n, camp rio y/n)
+
+
+CONCLUSION: we get a chi-sq value of 0.47183, and a p-value of 0.49 > 0.05, so we conclude that we do not reject the null (that there is no difference between the 2 categorical variables).
+
+A small chi-sq value indicates a high correlation between the variables (not independent), and if the values were exactly equal the chi-sq value would be zero. Our value here is less than 1, which is very low, and the p-value was not < 0.05 therefore not statistically significant. Therefore, there is no statistically significant difference between camp rio attendence and college matriculation. https://www.investopedia.com/terms/c/chi-square-statistic.asp
+```{r}
+
+chisq.test(matric_chisq$camp_rio, matric_chisq$matriculation, correct=FALSE)
+
+
+#----------------------------------------------------
+
+
+#degrees of freedom
+#reference: https://www.statisticshowto.com/probability-and-statistics/hypothesis-testing/degrees-of-freedom/#twoSDF
+
+
+#(N1 + N2) - 2
+#df_2_samples <- (1277 + 1277) - 2
+#df_2_samples   #df = 2552
+
+```
+
+
+Try a different test besides chi-sq (like t-test if data is normal, or whitney mann u if non-parametric for non-normal)
+```{r}
+#test data for normality
+shapiro.test(matric_chisq$camp_rio)        # p<0.05 significant, so not normal
+shapiro.test(matric_chisq$matriculation)   # p<0.05, significant, so not normal (normality only assumed if we do not reject the null that the data is normal, but sig. p-value says reject the null and it's not normal)
+
+
+
+
+```
+Whiney MANN U test - non-normal, non-parametric data
+
+```{r}
+
+matriculation <- matric_chisq$matriculation
+camp_rio <- matric_chisq$camp_rio
+
+
+#Whitney Mann U Test (non-parametric test since the 2 groups of data were not both normal)
+
+wilcox.test(matriculation, camp_rio)  #conclusion: p-values <0.05 is sig. so conclude Medians DO differ 
+
+wilcox.test(matriculation, camp_rio, alternative = "greater")   #same as above (sig p value)
+wilcox.test(matriculation, camp_rio, alternative = "less") #not sig.
+
+
+#boxplot
+boxplot(camp_rio ~ matriculation, data = matric_chisq)
+
+
+```
+
+
+
+Persistence
+
+need all students who enrolled in college in Fall 2019 (after graduating IDEA in Spring 2019).
+Will join this table to the enrolled in 2020 table (that I already have above) to see who persisted
+
+
+
+
+
+```{r}
+#filter for those who matriculated in 2019 to college (fall 2019), removing Fall 2020 matricualtion year (enroll_start_year != 2020, remove)
+matric5 #8024 rows
+matric6_2019 <- matric5 %>%
+  filter(enroll_start_year == 19)%>%
+  filter(enroll_start_month != "01") #remove january so it's a fall start date 
+matric6_2019 #2426 rows for 2019 matriculation year (fall 2019)
+
+
+#----------------------------
+#full join seems to be correct
+survey_stus3_matric5 <- full_join(survey_stus3, matric5, by=NULL)
+survey_stus3_matric5 
+
+survey_stus3_matric5_2019 <- survey_stus3_matric5 %>%
+  filter(enroll_start_year ==19)%>%
+  filter(enroll_start_month != "01") #remove start month of January since that's not Fall start
+survey_stus3_matric5_2019 #2426 rows
+
+survey_stus3_matric6_2019 <- full_join(survey_stus3,matric6_2019, by=NULL)
+survey_stus3_matric6_2019 #2440 rows, gained 14 rows so 14 of those who attended Camp rio did not matriculate
+
+
+
+#---------------------------------------
+#students table filtered for 2018-2019 and 2019-2020 Academic Years
+
+students_18_19
+students_12th_2018_2019 <- students_18_19%>%
+  filter(AcademicYear == "2018-2019")%>%
+  filter(GradeLevelID == 12)%>%
+  mutate(student_id = StudentNumber)
+students_12th_2018_2019 #1263 12th grade students for Academic Year 2018-2019
+
+#--------------------------------------------------------------
+
+join <- left_join(students_12th_2019_2020, matric6_2020, by=NULL)
+join #2893 rows
+1261 + 2426 #(students who are seniors, matric)
+3687-2893 #794 people who enrolled who are not on the students table as 12th graders
+
+join2 <- full_join(matric6_2020, students_12th_2019_2020, by=NULL)
+join2 
+
+join_left <- left_join(students_12th_2019_2020, matric6_2020, by=NULL)
+join_left
+
+#join_left2<- left_join(matric6_2020, students_12th_2019_2020, by=NULL)
+#join_left2
+
+join_left3 <- join_left %>%
+  select(AcademicYear, GradeLevelID, student_id, enrollment_begin, enroll_start_year, enroll_start_month, enrollment_end, enroll_end_year, enroll_end_month)
+join_left3 #1267 12th graders in 2019-2020, some enrolled some didn't, included the 22 who attended camp rio
+students_12th_2019_2020 #1261 rows of 12th grade students
+
+# remove the 22 students who attended camp rio, because we want those who did not attend (remove by each of the 22 student_id numbers)
+join_left3_minus_22 <- join_left3 %>%
+  filter(student_id != 108036703)%>%
+   filter(student_id != 108062558	)%>%
+  filter(student_id != 108036689)%>% 
+   filter(student_id != 108036646)%>%
+   filter(student_id != 108036711)%>%
+   filter(student_id != 108036734)%>%
+   filter(student_id != 108041942)%>%
+   filter(student_id != 108036695)%>%
+  filter(student_id != 108036677)%>% 
+   filter(student_id !=108036669)%>%
+   filter(student_id != 108036684)%>%
+   filter(student_id != 108036653)%>%
+   filter(student_id != 108075048)%>%
+   filter(student_id != 108040578)%>%
+  filter(student_id != 108036642)%>% 
+   filter(student_id != 108058696)%>%
+   filter(student_id != 108036729)%>%
+   filter(student_id != 108036062)%>%
+  filter(student_id != 108036655)%>% 
+   filter(student_id != 108036681)%>%
+   filter(student_id != 108036668)%>%
+   filter(student_id != 108069971)
+join_left3_minus_22 #1245 rows of all 12th graders, those who matric and those who didn't matric, excluding 22 who went to camp rio
+
+
+#omit the NAs to remove rows with NAs (those who didn't matriculate), count the number of rows and subtract from 1267, giving the number who did matriculate.
+
+num_who_matric <- na.omit(join_left3_minus_22)
+num_who_matric #782
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,25 @@
+---
+title: "CSGF AP Data Analysis"
+author: Maura Carter
+date: 08/17/2021
+output: html_notebook
+---
+
+
+
+AP for CSGF
+
+
+write table to csv
+```{r}
+
+
+ap_2 #4 school years, 2017/18, 2018/19, 2019/20, 2020/21. 
+
+
+#write to csv, then copy and past those two columns into the spreadsheet for CSGF wrike request.
+write.csv(ap_2, "C:\\Users\\maura.carter\\Documents\\Hiring\\data\\csgf_ap_2020_2021.csv", row.names = FALSE)
+
+
+
+```
